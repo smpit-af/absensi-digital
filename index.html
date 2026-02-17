@@ -374,7 +374,7 @@
     <div id="overlay"></div>
 
     <script>
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbyBdyWOZklb5o7UAYM3gFPd9MUzuLk0qn6GGXzneJVP6AGZLHJSKHmc4OYT-A6IlhcYEw/exec'; 
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbw6-eIuAHZVo74yKTV_I_Gfmjn13TZFiZcJrZWN3dGvd-x2ECvXJB-pq0UaJPL60tCDeg/exec'; 
         let currentFacingMode = "environment";
         let isProcessing = false;
         const html5QrCode = new Html5Qrcode("reader");
@@ -461,82 +461,85 @@
                 .catch(err => console.error(err));
         }
 
-        function onScanSuccess(decodedText) {
-            const isModalOpen = document.querySelector('.modal-overlay[style*="display: flex"]');
-            if (isModalOpen || isProcessing) return;
+// Fungsi untuk membuat AI berbicara (Text-to-Speech)
+function bicara(teks) {
+    const msg = new SpeechSynthesisUtterance();
+    msg.text = teks;
+    msg.lang = 'id-ID'; // Bahasa Indonesia
+    msg.rate = 1.0;     // Kecepatan bicara
+    window.speechSynthesis.speak(msg);
+}
 
-            isProcessing = true;
-            html5QrCode.stop().then(() => {
-                showStatus("⏳ Memproses...", "loading");
-                const finalURL = `${scriptURL}?id=${encodeURIComponent(decodedText)}&t=${new Date().getTime()}`;
-                
-                fetch(finalURL)
-                    .then(response => {
-                        // Membaca respon sebagai teks terlebih dahulu untuk menghindari crash JSON parsing
-                        return response.text().then(text => {
-                            try {
-                                // Coba ubah teks menjadi objek JSON
-                                const data = JSON.parse(text);
-                                return { type: 'json', content: data };
-                            } catch (e) {
-                                // Jika gagal, berarti respon adalah pesan teks biasa (String)
-                                return { type: 'text', content: text };
-                            }
-                        });
-                    })
-                    .then(res => {
-                        if (res.type === 'json') {
-                            const data = res.content;
-                            if (data.status === "success") {
-                                document.getElementById('soundSuccess').play().catch(e => {});
-                                if (navigator.vibrate) navigator.vibrate(200);
-                                
-                                let fileId = "";
-                                if(data.foto && data.foto.includes("id=")) fileId = data.foto.split("id=")[1];
-                                else if (data.foto && data.foto.includes("/d/")) fileId = data.foto.split("/d/")[1].split("/")[0];
-                                
-                                let fotoUrl = fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : "https://via.placeholder.com/100?text=FOTO";
+function onScanSuccess(decodedText) {
+    const isModalOpen = document.querySelector('.modal-overlay[style*="display: flex"]');
+    if (isModalOpen || isProcessing) return;
 
-                                let notifTerlambat = "";
-                                if (data.terlambat && data.menit > 0) {
-                                    let jam = Math.floor(data.menit / 60);
-                                    let sisaMenit = data.menit % 60;
-                                    let teksWaktu = jam > 0 ? `${jam} JAM ${sisaMenit} MENIT` : `${data.menit} MENIT`;
-                                    notifTerlambat = `<div class="animate__animated animate__shakeX" style="color: #ff3300; font-weight: 900; margin-top: 8px; background: white; border-radius: 8px; padding: 5px; font-size: 13px; border: 2px solid #ff3300;">⚠️ TERLAMBAT ${teksWaktu}</div>`;
-                                } else if (data.msg === "BERHASIL MASUK") {
-                                    notifTerlambat = `<div style="color: #28a745; font-weight: bold; margin-top: 8px; background: white; border-radius: 8px; padding: 4px; font-size: 12px;">✅ TEPAT WAKTU</div>`;
-                                }
-
-                                let htmlContent = `
-                                    <img src="${fotoUrl}" class="profile-img" onerror="this.src='https://via.placeholder.com/100?text=FOTO'">
-                                    <div style="font-size: 14px; margin-bottom: 5px; font-weight: 500;">${data.msg}</div>
-                                    <div style="font-size: 18px; font-weight: bold; color: yellow;">${data.nama}</div>
-                                    <div style="font-size: 13px; margin-top: 5px; background: rgba(0,0,0,0.2); display: inline-block; padding: 2px 10px; border-radius: 10px;">${data.jabatan}</div>
-                                    ${notifTerlambat}
-                                `;
-                                showStatus(htmlContent, "success", true);
-                            } else {
-                                playError();
-                                showStatus("⚠️ " + (data.msg || "Gagal"), "error");
-                            }
-                        } else {
-                            // JIKA HASILNYA ADALAH TEKS BIASA (NOTIFIKASI HARI MINGGU/SABAR/DLL)
-                            playError();
-                            showStatus(res.content, "error");
+    isProcessing = true;
+    html5QrCode.stop().then(() => {
+        showStatus("⏳ Memproses...", "loading");
+        const finalURL = `${scriptURL}?id=${encodeURIComponent(decodedText)}&t=${new Date().getTime()}`;
+        
+        fetch(finalURL)
+            .then(response => response.text().then(text => {
+                try { return { type: 'json', content: JSON.parse(text) }; } 
+                catch (e) { return { type: 'text', content: text }; }
+            }))
+            .then(res => {
+                if (res.type === 'json') {
+                    const data = res.content;
+                    if (data.status === "success") {
+                        // --- LOGIKA SUARA BERDASARKAN RESPON SERVER ---
+                        if (data.msg === "BERHASIL MASUK") {
+                            document.getElementById('soundSuccess').play().catch(e => {});
+                            bicara("Absen masuk berhasil, selamat bertugas!");
+                        } else if (data.msg === "BERHASIL PULANG") {
+                            document.getElementById('soundSuccess').play().catch(e => {});
+                            bicara("Absen pulang berhasil, Hati-hati di jalan, selamat beristirahat!");
                         }
-                    })
-                    .catch((err) => { 
-                        console.error(err);
-                        playError(); 
-                        showStatus("❌ Gagal Terhubung ke Server", "error"); 
-                    })
-                    .finally(() => setTimeout(() => {
-                        document.getElementById('overlay').style.display = 'none';
-                        isProcessing = false;
-                        startScanner();
-                    }, 4000));
-            });
-        }
+
+                        // Menampilkan Foto dan Data (Sama seperti sebelumnya)
+                        let fileId = "";
+                        if(data.foto && data.foto.includes("id=")) fileId = data.foto.split("id=")[1];
+                        else if (data.foto && data.foto.includes("/d/")) fileId = data.foto.split("/d/")[1].split("/")[0];
+                        let fotoUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400` : "https://via.placeholder.com/100?text=FOTO";
+
+                        let notifTerlambat = "";
+                        if (data.terlambat && data.menit > 0) {
+                            notifTerlambat = `<div class="animate__animated animate__shakeX" style="color: #ff3300; font-weight: 900; margin-top: 8px; background: white; border-radius: 8px; padding: 5px; font-size: 13px; border: 2px solid #ff3300;">⚠️ TERLAMBAT</div>`;
+                        }
+
+                        let htmlContent = `
+                            <img src="${fotoUrl}" class="profile-img" onerror="this.src='https://via.placeholder.com/100?text=FOTO'">
+                            <div style="font-size: 14px; margin-bottom: 5px; font-weight: 500;">${data.msg}</div>
+                            <div style="font-size: 18px; font-weight: bold; color: yellow;">${data.nama}</div>
+                            <div style="font-size: 13px; margin-top: 5px; background: rgba(0,0,0,0.2); display: inline-block; padding: 2px 10px; border-radius: 10px;">${data.jabatan}</div>
+                            ${notifTerlambat}
+                        `;
+                        showStatus(htmlContent, "success", true);
+                    } else {
+                        // JIKA STATUS BUKAN SUCCESS (Contoh: Sudah lengkap)
+                        playError();
+                        if (data.msg.includes("SUDAH LENGKAP") || data.msg.includes("SUDAH ABSEN")) {
+                            bicara("Maaf, Absensi anda sudah lengkap.");
+                        }
+                        showStatus("⚠️ " + (data.msg || "Gagal"), "error");
+                    }
+                } else {
+                    playError();
+                    showStatus(res.content, "error");
+                }
+            })
+            .catch((err) => { 
+                playError(); 
+                showStatus("❌ Gagal Terhubung ke Server", "error"); 
+            })
+            .finally(() => setTimeout(() => {
+                document.getElementById('overlay').style.display = 'none';
+                isProcessing = false;
+                startScanner();
+            }, 4000));
+    });
+}
 
         function playError() {
             if (navigator.vibrate) navigator.vibrate([300, 150, 300]);
@@ -684,4 +687,5 @@ function filterDaftarGuru() {
     </script>
 </body>
 </html>
+
 
