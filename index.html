@@ -361,6 +361,10 @@
                 <input type="text" id="ketLibur" placeholder="Keterangan Libur (Cth: Idul Fitri)">
             </div>
             <button class="btn-submit" style="background: #333;" id="btnSimpanLibur" onclick="simpanLibur()">Tambah Hari Libur</button>
+            <div class="divider"><span>ALAT CETAK</span></div>
+<button class="btn-submit" style="background: #10b981;" onclick="window.open(scriptURL + '?page=print', '_blank')">
+    <i class="fas fa-qrcode"></i> GENERATE SEMUA KARTU QR
+</button>
             <button class="btn-logout" onclick="prosesLogout()"><i class="fas fa-sign-out-alt"></i> Logout Admin</button>
         </div>
     </div>
@@ -370,7 +374,7 @@
     <div id="overlay"></div>
 
     <script>
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbznB-xgk9uPO-Tr145QUhMOvQat70BPfhShXlZ-hnbqGeZJEvTo_0XP1d5cud9Jw5xNDg/exec'; 
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbzxw6bsvbUHaob6z2Md6uD4lNFGGU5lv0SbYkktH4wEauCCX4PdpWUj8Tx3u-U6X9w4zw/exec'; 
         let currentFacingMode = "environment";
         let isProcessing = false;
         const html5QrCode = new Html5Qrcode("reader");
@@ -656,6 +660,10 @@ function filterDaftarGuru() {
         row.style.display = nama.includes(input) ? "" : "none";
     });
 }
+        
+        function bukaPrint() {
+    window.open(scriptURL + "?page=print", "_blank");
+}
 
         function bukaJadwal() {
             const btn = document.querySelector('.btn-jadwal');
@@ -676,17 +684,3 @@ function filterDaftarGuru() {
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
