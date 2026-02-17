@@ -62,48 +62,55 @@
         #clock { font-size: clamp(22px, 6.5vw, 30px); font-weight: bold; color: var(--secondary); margin-top: 4px; }
 
         /* Container pembungkus agar lebarnya sama */
-        .scanner-group {
+.scanner-group {
             width: 100%;
-            max-width: 340px; /* Samakan dengan lebar reader-wrapper */
-            margin: 10px auto;
+            max-width: 340px; 
+            margin: 15px auto 5px; /* Jarak dari jam */
             display: flex;
             flex-direction: column;
-            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.3));
+            align-items: center;
         }
 
         .running-text-container {
             width: 100%;
-            background: #1e3a8a; /* Warna biru lebih gelap agar kontras */
+            background: rgba(0, 0, 0, 0.5); /* Warna background transparan gelap */
             overflow: hidden;
             padding: 8px 0;
-            margin: 0; /* Pastikan 0 agar menempel */
-            border-radius: 20px 20px 0 0; /* Lengkung hanya di atas */
-            border-bottom: 1px solid rgba(255,255,255,0.2);
+            margin: 0;
+            border-radius: 20px 20px 0 0; /* Menempel di atas scanner */
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: block; /* Pastikan muncul */
         }
 
         .marquee {
             white-space: nowrap;
             display: inline-block;
-            animation: marquee 20s linear infinite;
+            animation: marquee 15s linear infinite;
+            will-change: transform;
         }
 
         .marquee span {
-            font-size: 12px;
-            color: #ffffff;
+            font-size: 13px;
+            color: #ffcc00; /* Warna kuning agar kontras */
             font-weight: bold;
-            padding-left: 100%;
+            padding-right: 50px; /* Jarak antar pengulangan teks */
+            display: inline-block;
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
         }
 
         #reader-wrapper {
-            background: white; padding: 10px;
+            background: white; 
             padding: 10px;
-            border-radius: 0 0 20px 20px; /* Lengkung hanya di bawah */
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-            margin: 0; /* Hilangkan margin agar menempel ke running text */
-            width: 100%; max-width: 340px;
+            border-radius: 0 0 25px 25px; /* Menempel di bawah teks */
+            margin: 0 !important; 
+            width: 100%;
             position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
         }
-
 
         #reader { width: 100%; border: none !important; border-radius: 18px; overflow: hidden; }
         
@@ -249,7 +256,7 @@
         <div class="scanner-group">
             <div class="running-text-container">
                 <div class="marquee">
-                    <span id="runningTextContent">Selamat Datang di E-Absensi SMP IT Al Fathonah - Silahkan Scan QR Code Anda...</span>
+                    <span id="runningTextContent">Memuat Pengumuman Terbaru SMP IT Al Fathonah...</span>
                 </div>
             </div>
 
@@ -612,4 +619,5 @@
     </script>
 </body>
 </html>
+
 
