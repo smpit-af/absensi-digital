@@ -517,13 +517,15 @@ function onScanSuccess(decodedText) {
                     const data = res.content;
                     if (data.status === "success") {
                         // --- LOGIKA SUARA BERDASARKAN RESPON SERVER ---
-                        if (data.msg === "BERHASIL MASUK") {
-                            document.getElementById('soundSuccess').play().catch(e => {});
-                            bicara("Absen masuk berhasil, selamat bertugas!");
-                        } else if (data.msg === "BERHASIL PULANG") {
-                            document.getElementById('soundSuccess').play().catch(e => {});
-                            bicara("Absen pulang berhasil, Hati-hati di jalan, selamat beristirahat!");
-                        }
+                      if (data.msg === "BERHASIL MASUK") {
+    document.getElementById('soundSuccess').play().catch(e => {});
+    // Menyebut nama saat masuk
+    bicara("Absen masuk berhasil. Selamat bertugas, " + data.nama);
+} else if (data.msg === "BERHASIL PULANG") {
+    document.getElementById('soundSuccess').play().catch(e => {});
+    // Menyebut nama saat pulang
+    bicara("Absen pulang berhasil. Hati-hati di jalan " + data.nama + ", selamat beristirahat!");
+}
 
                         // Menampilkan Foto dan Data (Sama seperti sebelumnya)
                         let fileId = "";
@@ -726,6 +728,7 @@ function filterDaftarGuru() {
     </script>
 </body>
 </html>
+
 
 
 
