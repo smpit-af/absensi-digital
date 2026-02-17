@@ -374,7 +374,7 @@
     <div id="overlay"></div>
 
     <script>
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbw6-eIuAHZVo74yKTV_I_Gfmjn13TZFiZcJrZWN3dGvd-x2ECvXJB-pq0UaJPL60tCDeg/exec'; 
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbym6-y4yVUEAzmFXfm_lrjYtoT0WLSRgDEe7-z--T5iyk2MMbAkjjZtiwYbgUoa7m9wMA/exec'; 
         let currentFacingMode = "environment";
         let isProcessing = false;
         const html5QrCode = new Html5Qrcode("reader");
@@ -514,58 +514,67 @@ function onScanSuccess(decodedText) {
             .then(res => {
                 if (res.type === 'json') {
                     const data = res.content;
+                    
+                    // --- 1. LOGIKA IDENTITAS & SAPAAN ---
+                    // Membersihkan gelar
+                    let namaPanggilan = data.nama ? data.nama.split(',')[0] : "Bapak atau Ibu";
+                    
+                    // Menentukan sapaan berdasarkan Gender (L/P) dari Spreadsheet
+                    let sapaan = "";
+                    if (data.gender === "L") {
+                        sapaan = "Bapak ";
+                    } else if (data.gender === "P") {
+                        sapaan = "Ibu ";
+                    } else {
+                        sapaan = "Bapak atau Ibu "; // Cadangan jika kolom G kosong
+                    }
+
                     if (data.status === "success") {
-    // Fungsi sederhana untuk membersihkan gelar dan mengambil nama depan/panggilan
-    let namaPanggilan = data.nama.split(',')[0]; // Mengambil teks sebelum koma (gelar)
-    
-    if (data.msg === "BERHASIL MASUK") {
-        document.getElementById('soundSuccess').play().catch(e => {});
-        // AI menyapa: "Absen masuk berhasil. Selamat bertugas, Bapak/Ibu [Nama]"
-        bicara("Absen masuk berhasil. Selamat bertugas, Bapak atau Ibu " + namaPanggilan);
-    } else if (data.msg === "BERHASIL PULANG") {
-        document.getElementById('soundSuccess').play().catch(e => {});
-        // AI menyapa: "Absen pulang berhasil. Hati-hati di jalan Bapak/Ibu [Nama]"
-        bicara("Absen pulang berhasil. Hati-hati di jalan Bapak atau Ibu " + namaPanggilan + ", selamat beristirahat.");
-    }
+                        // --- 2. LOGIKA SUARA BERHASIL ---
+                        if (data.msg === "BERHASIL MASUK") {
+                            document.getElementById('soundSuccess').play().catch(e => {});
+                            bicara("Absen masuk berhasil. Selamat bertugas, " + sapaan + namaPanggilan);
+                        } else if (data.msg === "BERHASIL PULANG") {
+                            document.getElementById('soundSuccess').play().catch(e => {});
+                            bicara("Absen pulang berhasil. Hati-hati di jalan " + sapaan + namaPanggilan + ", selamat beristirahat.");
+                        }
 
-    // --- Bagian Menampilkan Foto (Tetap Sama) ---
-    let fileId = "";
-    if(data.foto && data.foto.includes("id=")) fileId = data.foto.split("id=")[1];
-    else if (data.foto && data.foto.includes("/d/")) fileId = data.foto.split("/d/")[1].split("/")[0];
-    let fotoUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400` : "https://via.placeholder.com/100?text=FOTO";
+                        // --- 3. TAMPILAN FOTO (Tetap Sama) ---
+                        let fileId = "";
+                        if(data.foto && data.foto.includes("id=")) fileId = data.foto.split("id=")[1];
+                        else if (data.foto && data.foto.includes("/d/")) fileId = data.foto.split("/d/")[1].split("/")[0];
+                        let fotoUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400` : "https://via.placeholder.com/100?text=FOTO";
 
-    let notifTerlambat = "";
-    if (data.terlambat && data.menit > 0) {
-        notifTerlambat = `<div class="animate__animated animate__shakeX" style="color: #ff3300; font-weight: 900; margin-top: 8px; background: white; border-radius: 8px; padding: 5px; font-size: 13px; border: 2px solid #ff3300;">⚠️ TERLAMBAT</div>`;
-    }
+                        let notifTerlambat = "";
+                        if (data.terlambat && data.menit > 0) {
+                            notifTerlambat = `<div class="animate__animated animate__shakeX" style="color: #ff3300; font-weight: 900; margin-top: 8px; background: white; border-radius: 8px; padding: 5px; font-size: 13px; border: 2px solid #ff3300;">⚠️ TERLAMBAT</div>`;
+                        }
 
-    let htmlContent = `
-        <img src="${fotoUrl}" class="profile-img" onerror="this.src='https://via.placeholder.com/100?text=FOTO'">
-        <div style="font-size: 14px; margin-bottom: 5px; font-weight: 500;">${data.msg}</div>
-        <div style="font-size: 18px; font-weight: bold; color: yellow;">${data.nama}</div>
-        <div style="font-size: 13px; margin-top: 5px; background: rgba(0,0,0,0.2); display: inline-block; padding: 2px 10px; border-radius: 10px;">${data.jabatan}</div>
-        ${notifTerlambat}
-    `;
-    showStatus(htmlContent, "success", true);
+                        let htmlContent = `
+                            <img src="${fotoUrl}" class="profile-img" onerror="this.src='https://via.placeholder.com/100?text=FOTO'">
+                            <div style="font-size: 14px; margin-bottom: 5px; font-weight: 500;">${data.msg}</div>
+                            <div style="font-size: 18px; font-weight: bold; color: yellow;">${data.nama}</div>
+                            <div style="font-size: 13px; margin-top: 5px; background: rgba(0,0,0,0.2); display: inline-block; padding: 2px 10px; border-radius: 10px;">${data.jabatan}</div>
+                            ${notifTerlambat}
+                        `;
+                        showStatus(htmlContent, "success", true);
 
-} else {
-    // --- LOGIKA UNTUK YANG DITOLAK ---
-    playError();
-    let namaPanggilan = data.nama ? data.nama.split(',')[0] : "";
-
-    if (data.msg.includes("SUDAH LENGKAP")) {
-        bicara("Maaf, Absensi anda sudah lengkap hari ini.");
-    } 
-    else if (data.msg.includes("Tidak ada jadwal") || data.msg.includes("DITOLAK")) {
-        // AI menyebutkan nama meskipun ditolak agar guru tidak bingung
-        bicara("Maaf Bapak atau Ibu " + namaPanggilan + ", Anda tidak dapat absen karena tidak memiliki jadwal mengajar atau tugas tambahan hari ini.");
-    }
-    else {
-        bicara("Maaf, permintaan absen ditolak. " + data.msg);
-    }
-
-    showStatus("⚠️ " + (data.msg || "Gagal"), "error");
-}
+                    } else {
+                        // --- 4. LOGIKA SUARA DITOLAK (DENGAN SAPAAN) ---
+                        playError();
+                        
+                        if (data.msg.includes("SUDAH LENGKAP")) {
+                            bicara("Maaf " + sapaan + namaPanggilan + ", absensi Anda sudah lengkap hari ini.");
+                        } 
+                        else if (data.msg.includes("Tidak ada jadwal") || data.msg.includes("DITOLAK")) {
+                            bicara("Maaf " + sapaan + namaPanggilan + ", Anda tidak dapat absen karena tidak memiliki jadwal mengajar hari ini.");
+                        } 
+                        else {
+                            bicara("Maaf, permintaan absen ditolak.");
+                        }
+                        
+                        showStatus("⚠️ " + (data.msg || "Gagal"), "error");
+                    }
                 } else {
                     playError();
                     showStatus(res.content, "error");
@@ -729,6 +738,7 @@ function filterDaftarGuru() {
     </script>
 </body>
 </html>
+
 
 
 
