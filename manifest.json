@@ -1,6 +1,6 @@
 {
   "name": "E-Absensi SMP IT Al Fathonah",
-  "short_name": "E-Absensi AlFathonah",
+  "short_name": "E-Absensi SMPIT-AF",
   "description": "Sistem Absensi Digital SMP IT Al Fathonah",
   "start_url": "/absensi-digital/index.html",
   "scope": "/absensi-digital/",
@@ -25,3 +25,4 @@
     }
   ]
 }
+
