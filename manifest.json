@@ -1,10 +1,11 @@
 {
   "name": "E-Absensi SMP IT Al Fathonah",
-  "short_name": "E-Absensi",
+  "short_name": "E-Absensi AlFathonah",
   "description": "Sistem Absensi Digital SMP IT Al Fathonah",
   "start_url": "/absensi-digital/index.html",
   "scope": "/absensi-digital/",
   "display": "standalone",
+  "display_override": ["standalone", "fullscreen", "minimal-ui"],
   "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#2b59bc",
@@ -12,7 +13,7 @@
   "icons": [
     {
       "src": "logo/Logo.png",
-      "sizes": "512x512",
+      "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
@@ -24,4 +25,3 @@
     }
   ]
 }
-
