@@ -461,7 +461,6 @@
                 .catch(err => console.error(err));
         }
 
-// Fungsi untuk membuat AI berbicara (Text-to-Speech)
 // Fungsi untuk membuat AI berbicara (Optimasi Suara Manusiawi)
 function bicara(teks) {
     if (!window.speechSynthesis) return;
@@ -516,51 +515,53 @@ function onScanSuccess(decodedText) {
                 if (res.type === 'json') {
                     const data = res.content;
                     if (data.status === "success") {
-                        // --- LOGIKA SUARA BERDASARKAN RESPON SERVER ---
-                      if (data.msg === "BERHASIL MASUK") {
-    document.getElementById('soundSuccess').play().catch(e => {});
-    // Menyebut nama saat masuk
-    bicara("Absen masuk berhasil. Selamat bertugas, " + data.nama);
-} else if (data.msg === "BERHASIL PULANG") {
-    document.getElementById('soundSuccess').play().catch(e => {});
-    // Menyebut nama saat pulang
-    bicara("Absen pulang berhasil. Hati-hati di jalan " + data.nama + ", selamat beristirahat!");
-}
+    // Fungsi sederhana untuk membersihkan gelar dan mengambil nama depan/panggilan
+    let namaPanggilan = data.nama.split(',')[0]; // Mengambil teks sebelum koma (gelar)
+    
+    if (data.msg === "BERHASIL MASUK") {
+        document.getElementById('soundSuccess').play().catch(e => {});
+        // AI menyapa: "Absen masuk berhasil. Selamat bertugas, Bapak/Ibu [Nama]"
+        bicara("Absen masuk berhasil. Selamat bertugas, Bapak atau Ibu " + namaPanggilan);
+    } else if (data.msg === "BERHASIL PULANG") {
+        document.getElementById('soundSuccess').play().catch(e => {});
+        // AI menyapa: "Absen pulang berhasil. Hati-hati di jalan Bapak/Ibu [Nama]"
+        bicara("Absen pulang berhasil. Hati-hati di jalan Bapak atau Ibu " + namaPanggilan + ", selamat beristirahat.");
+    }
 
-                        // Menampilkan Foto dan Data (Sama seperti sebelumnya)
-                        let fileId = "";
-                        if(data.foto && data.foto.includes("id=")) fileId = data.foto.split("id=")[1];
-                        else if (data.foto && data.foto.includes("/d/")) fileId = data.foto.split("/d/")[1].split("/")[0];
-                        let fotoUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400` : "https://via.placeholder.com/100?text=FOTO";
+    // --- Bagian Menampilkan Foto (Tetap Sama) ---
+    let fileId = "";
+    if(data.foto && data.foto.includes("id=")) fileId = data.foto.split("id=")[1];
+    else if (data.foto && data.foto.includes("/d/")) fileId = data.foto.split("/d/")[1].split("/")[0];
+    let fotoUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400` : "https://via.placeholder.com/100?text=FOTO";
 
-                        let notifTerlambat = "";
-                        if (data.terlambat && data.menit > 0) {
-                            notifTerlambat = `<div class="animate__animated animate__shakeX" style="color: #ff3300; font-weight: 900; margin-top: 8px; background: white; border-radius: 8px; padding: 5px; font-size: 13px; border: 2px solid #ff3300;">⚠️ TERLAMBAT</div>`;
-                        }
+    let notifTerlambat = "";
+    if (data.terlambat && data.menit > 0) {
+        notifTerlambat = `<div class="animate__animated animate__shakeX" style="color: #ff3300; font-weight: 900; margin-top: 8px; background: white; border-radius: 8px; padding: 5px; font-size: 13px; border: 2px solid #ff3300;">⚠️ TERLAMBAT</div>`;
+    }
 
-                        let htmlContent = `
-                            <img src="${fotoUrl}" class="profile-img" onerror="this.src='https://via.placeholder.com/100?text=FOTO'">
-                            <div style="font-size: 14px; margin-bottom: 5px; font-weight: 500;">${data.msg}</div>
-                            <div style="font-size: 18px; font-weight: bold; color: yellow;">${data.nama}</div>
-                            <div style="font-size: 13px; margin-top: 5px; background: rgba(0,0,0,0.2); display: inline-block; padding: 2px 10px; border-radius: 10px;">${data.jabatan}</div>
-                            ${notifTerlambat}
-                        `;
-                        showStatus(htmlContent, "success", true);
-                   } else {
-    // Skenario jika ditolak oleh server
+    let htmlContent = `
+        <img src="${fotoUrl}" class="profile-img" onerror="this.src='https://via.placeholder.com/100?text=FOTO'">
+        <div style="font-size: 14px; margin-bottom: 5px; font-weight: 500;">${data.msg}</div>
+        <div style="font-size: 18px; font-weight: bold; color: yellow;">${data.nama}</div>
+        <div style="font-size: 13px; margin-top: 5px; background: rgba(0,0,0,0.2); display: inline-block; padding: 2px 10px; border-radius: 10px;">${data.jabatan}</div>
+        ${notifTerlambat}
+    `;
+    showStatus(htmlContent, "success", true);
+
+} else {
+    // --- LOGIKA UNTUK YANG DITOLAK ---
     playError();
+    let namaPanggilan = data.nama ? data.nama.split(',')[0] : "";
 
-    if (data.msg.includes("SUDAH LENGKAP") || data.msg.includes("SUDAH ABSEN")) {
-        bicara("Maaf, Absensi anda sudah lengkap untuk hari ini.");
+    if (data.msg.includes("SUDAH LENGKAP")) {
+        bicara("Maaf, Absensi anda sudah lengkap hari ini.");
     } 
-    // LOGIKA BARU UNTUK GURU TANPA JADWAL & JABATAN TAMBAHAN
     else if (data.msg.includes("Tidak ada jadwal") || data.msg.includes("DITOLAK")) {
-        // AI menyebutkan nama jika data nama tersedia dari server
-        let pesanSuara = "Maaf " + (data.nama || "") + ", Anda tidak memiliki jadwal mengajar atau tugas tambahan hari ini.";
-        bicara(pesanSuara);
-    } 
+        // AI menyebutkan nama meskipun ditolak agar guru tidak bingung
+        bicara("Maaf Bapak atau Ibu " + namaPanggilan + ", Anda tidak dapat absen karena tidak memiliki jadwal mengajar atau tugas tambahan hari ini.");
+    }
     else {
-        bicara("Maaf, absensi ditolak. " + data.msg);
+        bicara("Maaf, permintaan absen ditolak. " + data.msg);
     }
 
     showStatus("⚠️ " + (data.msg || "Gagal"), "error");
@@ -728,6 +729,7 @@ function filterDaftarGuru() {
     </script>
 </body>
 </html>
+
 
 
 
