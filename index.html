@@ -544,14 +544,25 @@ function onScanSuccess(decodedText) {
                             ${notifTerlambat}
                         `;
                         showStatus(htmlContent, "success", true);
-                    } else {
-                        // JIKA STATUS BUKAN SUCCESS (Contoh: Sudah lengkap)
-                        playError();
-                        if (data.msg.includes("SUDAH LENGKAP") || data.msg.includes("SUDAH ABSEN")) {
-                            bicara("Maaf, Absensi anda sudah lengkap.");
-                        }
-                        showStatus("⚠️ " + (data.msg || "Gagal"), "error");
-                    }
+                   } else {
+    // Skenario jika ditolak oleh server
+    playError();
+
+    if (data.msg.includes("SUDAH LENGKAP") || data.msg.includes("SUDAH ABSEN")) {
+        bicara("Maaf, Absensi anda sudah lengkap untuk hari ini.");
+    } 
+    // LOGIKA BARU UNTUK GURU TANPA JADWAL & JABATAN TAMBAHAN
+    else if (data.msg.includes("Tidak ada jadwal") || data.msg.includes("DITOLAK")) {
+        // AI menyebutkan nama jika data nama tersedia dari server
+        let pesanSuara = "Maaf " + (data.nama || "") + ", Anda tidak memiliki jadwal mengajar atau tugas tambahan hari ini.";
+        bicara(pesanSuara);
+    } 
+    else {
+        bicara("Maaf, absensi ditolak. " + data.msg);
+    }
+
+    showStatus("⚠️ " + (data.msg || "Gagal"), "error");
+}
                 } else {
                     playError();
                     showStatus(res.content, "error");
@@ -715,6 +726,7 @@ function filterDaftarGuru() {
     </script>
 </body>
 </html>
+
 
 
 
