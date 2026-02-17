@@ -644,18 +644,17 @@
     }
 
 // --- FITUR MONITOR & LAPORAN ADMIN ---
-   function monitorKehadiran() {
+function monitorKehadiran() {
     const area = document.getElementById('areaHasilAdmin');
     const btn = document.getElementById('btnMonitor');
     
-    // LOGIKA TOGGLE: Jika area sedang tampil, maka sembunyikan (tutup)
+    // Logika Toggle (Buka-Tutup)
     if (area.style.display === "block" && area.innerHTML !== "") {
         area.style.display = "none";
-        area.innerHTML = ""; // Bersihkan isi agar fresh saat dibuka lagi
-        return; // Berhenti di sini
+        area.innerHTML = "";
+        return;
     }
 
-    // Jika area sedang tutup, maka jalankan proses ambil data (buka)
     area.style.display = "block";
     area.innerHTML = "<div style='text-align:center; padding:10px;'><i class='fas fa-spinner fa-spin'></i> Memproses data...</div>";
     btn.disabled = true;
@@ -664,17 +663,34 @@
         .then(res => res.json())
         .then(res => {
             if (res.status === "success") {
-                let html = `<div style="margin-bottom:8px;"><strong>Belum Absen (${res.belum.length}):</strong><br>`;
+                // --- BAGIAN BELUM ABSEN (ALPHA / MERAH) ---
+                let html = `<div style="margin-bottom:8px;"><strong>Belum Absen / Alpha (${res.belum.length}):</strong><br>`;
                 if (res.belum.length === 0) html += `<span style="color:#64748b; font-style:italic;">Semua guru sudah absen.</span>`;
                 res.belum.forEach(g => {
-                    html += `<span style="color:#ef4444; display:block;">✘ ${g.nama}</span>`;
+                    // Warna Merah untuk yang belum hadir sama sekali
+                    html += `<span style="color:#ef4444; display:block; font-weight:500;">✘ ${g.nama}</span>`;
                 });
                 
-                html += `</div><div style="border-top:1px solid #ddd; padding-top:8px;"><strong>Sudah Absen (${res.sudah.length}):</strong><br>`;
+                // --- BAGIAN SUDAH TERDATA (HADIR, IZIN, SAKIT) ---
+                html += `</div><div style="border-top:1px solid #ddd; padding-top:8px;"><strong>Sudah Terdata (${res.sudah.length}):</strong><br>`;
                 if (res.sudah.length === 0) html += `<span style="color:#64748b; font-style:italic;">Belum ada data masuk.</span>`;
+                
                 res.sudah.forEach(g => {
-                    let ket = g.status === "H" ? "Hadir" : (g.status === "I" ? "Izin" : (g.status === "S" ? "Sakit" : "Alpha"));
-                    html += `<span style="color:#10b981; display:block;">✔ ${g.nama} <small style="color:#64748b">(${g.jam} - ${ket})</small></span>`;
+                    let warnaStatus = "#10b981"; // Default Hijau (Hadir)
+                    let teksStatus = "Hadir";
+
+                    if (g.status === "I") {
+                        warnaStatus = "#2196f3"; // Biru (Izin)
+                        teksStatus = "Izin";
+                    } else if (g.status === "S") {
+                        warnaStatus = "#f59e0b"; // Kuning/Oranye (Sakit)
+                        teksStatus = "Sakit";
+                    } else if (g.status === "A") {
+                        warnaStatus = "#ef4444"; // Merah (Alpha - jika diinput manual)
+                        teksStatus = "Alpha";
+                    }
+
+                    html += `<span style="color:${warnaStatus}; display:block; font-weight:500;">✔ ${g.nama} <small style="color:#64748b">(${g.jam} - ${teksStatus})</small></span>`;
                 });
                 area.innerHTML = html;
             }
@@ -775,33 +791,57 @@ document.getElementById('areaHasilAdmin').innerHTML = '';
         if (confirm("Keluar dari mode Admin?")) closeModal('modalIzin');
     }
 
-    function simpanIzin() {
-        const id = document.getElementById('idGuruIzin').value;
-        const status = document.getElementById('statusIzin').value;
-        const ket = document.getElementById('ketIzin').value;
-        const btn = document.getElementById('btnSimpanIzin');
-        if (!id || !ket) {
-            alert("Lengkapi data!");
-            return;
-        }
-        btn.disabled = true;
-        btn.innerText = "Mengirim...";
-        fetch(`${scriptURL}?action=tambahIzin&id=${id}&status=${status}&ket=${encodeURIComponent(ket)}`)
-            .then(res => res.text())
-            .then(data => {
-                if (data.includes("⚠️") || data.includes("❌")) playError();
-                alert(data);
-                closeModal('modalIzin');
-            })
-            .catch(() => {
-                playError();
-                alert("Gagal mengirim data!");
-            })
-            .finally(() => {
-                btn.disabled = false;
-                btn.innerText = "Simpan Izin";
-            });
+   function simpanIzin() {
+    const id = document.getElementById('idGuruIzin').value;
+    const status = document.getElementById('statusIzin').value;
+    const ket = document.getElementById('ketIzin').value;
+    const btn = document.getElementById('btnSimpanIzin');
+
+    if (!id || !ket) {
+        alert("Lengkapi data!");
+        return;
     }
+
+    btn.disabled = true;
+    btn.innerText = "Mengirim...";
+
+    fetch(`${scriptURL}?action=tambahIzin&id=${id}&status=${status}&ket=${encodeURIComponent(ket)}`)
+        .then(res => res.text())
+        .then(data => {
+            if (data.includes("⚠️") || data.includes("❌")) {
+                playError();
+                alert(data);
+            } else {
+                // Notifikasi sukses kecil (opsional, bisa pakai alert atau toast)
+                alert("Data berhasil disimpan!");
+                
+                // --- PERBAIKAN UX ---
+                // 1. Kosongkan inputan agar siap isi guru berikutnya
+                document.getElementById('idGuruIzin').value = '';
+                document.getElementById('ketIzin').value = '';
+                document.getElementById('idGuruIzin').focus(); // Fokuskan kembali ke input ID
+
+                // 2. Update angka dashboard (Rekap) secara otomatis
+                // Agar admin melihat angka di atas langsung berubah
+                fetch(`${scriptURL}?action=getRingkasan`)
+                    .then(res => res.json())
+                    .then(dataRingkasan => {
+                        animateValue("rekapHadir", parseInt(document.getElementById('rekapHadir').innerText), dataRingkasan.hadir, 800);
+                        animateValue("rekapIzin", parseInt(document.getElementById('rekapIzin').innerText), dataRingkasan.izin, 800);
+                        animateValue("rekapSakit", parseInt(document.getElementById('rekapSakit').innerText), dataRingkasan.sakit, 800);
+                        animateValue("rekapAlpha", parseInt(document.getElementById('rekapAlpha').innerText), dataRingkasan.alpha, 800);
+                    });
+            }
+        })
+        .catch(() => {
+            playError();
+            alert("Gagal mengirim data!");
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerText = "Simpan Izin";
+        });
+}
 
     function simpanLibur() {
         const tgl = document.getElementById('tglLibur').value;
@@ -913,6 +953,7 @@ document.getElementById('areaHasilAdmin').innerHTML = '';
 </script>
 </body>
 </html>
+
 
 
 
