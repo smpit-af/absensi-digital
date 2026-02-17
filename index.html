@@ -374,7 +374,7 @@
     <div id="overlay"></div>
 
     <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbz88KQYkNvSz5pYF2ld5ebI0g4Dz_JhwrJtYg0GKqfOp2gf40CbAypcDVvluHokFKturw/exec';
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbyuH4IoF5cF4tg4Ad-BoHi035yzdZsRzYPrfrhw0PTACwQPfZZ8qnVFakE8rzcpFK9-UQ/exec';
     let currentFacingMode = "environment";
     let isProcessing = false;
     const html5QrCode = new Html5Qrcode("reader");
@@ -634,34 +634,50 @@
     }
 
     // --- PROSES ADMIN ---
+function prosesLogin() {
+    const u = document.getElementById('userAdmin').value;
+    const p = document.getElementById('passAdmin').value;
+    const btn = document.getElementById('btnLogin');
 
-    function prosesLogin() {
-        const u = document.getElementById('userAdmin').value;
-        const p = document.getElementById('passAdmin').value;
-        const btn = document.getElementById('btnLogin');
-        if (u === "admin" && p === "20253892") {
-            btn.innerText = "Memuat Panel...";
-            btn.disabled = true;
-            fetch(`${scriptURL}?action=getRingkasan`)
-                .then(res => res.json())
-                .then(data => {
-                    closeModal('modalLogin');
-                    openModal('modalIzin');
-                    animateValue("rekapHadir", 0, data.hadir, 1200);
-                    animateValue("rekapIzin", 0, data.izin, 1200);
-                    animateValue("rekapSakit", 0, data.sakit, 1200);
-                    animateValue("rekapAlpha", 0, data.alpha, 1200);
-                })
-                .catch(() => alert("Gagal mengambil ringkasan!"))
-                .finally(() => {
-                    btn.innerText = "Login";
-                    btn.disabled = false;
-                });
-        } else {
-            playError();
-            alert("Username atau Password Salah!");
-        }
+    if (!u || !p) {
+        alert("Isi username dan password!");
+        return;
     }
+
+    btn.innerText = "Memverifikasi...";
+    btn.disabled = true;
+
+    // Mengirim permintaan login ke server (Code.gs)
+    fetch(`${scriptURL}?action=loginAdmin&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "success") {
+                // Jika login berhasil, baru ambil data ringkasan
+                btn.innerText = "Memuat Panel...";
+                fetch(`${scriptURL}?action=getRingkasan`)
+                    .then(res => res.json())
+                    .then(dataRingkasan => {
+                        closeModal('modalLogin');
+                        openModal('modalIzin');
+                        animateValue("rekapHadir", 0, dataRingkasan.hadir, 1200);
+                        animateValue("rekapIzin", 0, dataRingkasan.izin, 1200);
+                        animateValue("rekapSakit", 0, dataRingkasan.sakit, 1200);
+                        animateValue("rekapAlpha", 0, dataRingkasan.alpha, 1200);
+                    });
+            } else {
+                playError();
+                alert("Username atau Password Salah!");
+                btn.innerText = "Login";
+                btn.disabled = false;
+            }
+        })
+        .catch(() => {
+            playError();
+            alert("Gagal terhubung ke server!");
+            btn.innerText = "Login";
+            btn.disabled = false;
+        });
+}
 
     function prosesLogout() {
         if (confirm("Keluar dari mode Admin?")) closeModal('modalIzin');
@@ -805,3 +821,4 @@
 </script>
 </body>
 </html>
+
