@@ -333,12 +333,25 @@
             <span class="close-modal" onclick="closeModal('modalIzin')">×</span>
             <h4>Panel Control Admin</h4>
             <div class="dashboard-grid">
-                <div class="dash-item bg-hadir"><span>Hadir</span><b id="rekapHadir">0</b></div>
-                <div class="dash-item bg-izin"><span>Izin</span><b id="rekapIzin">0</b></div>
-                <div class="dash-item bg-sakit"><span>Sakit</span><b id="rekapSakit">0</b></div>
-                <div class="dash-item bg-alpha"><span>Alpha</span><b id="rekapAlpha">0</b></div>
-            </div>
-            <div class="divider"><span>INPUT IZIN / SAKIT</span></div>
+    <div class="dash-item bg-hadir"><span>Hadir</span><b id="rekapHadir">0</b></div>
+    <div class="dash-item bg-izin"><span>Izin</span><b id="rekapIzin">0</b></div>
+    <div class="dash-item bg-sakit"><span>Sakit</span><b id="rekapSakit">0</b></div>
+    <div class="dash-item bg-alpha"><span>Alpha</span><b id="rekapAlpha">0</b></div>
+</div>
+
+<div class="divider"><span>FITUR MONITORING & LAPORAN</span></div>
+<div style="display: flex; gap: 8px; margin-bottom: 10px;">
+    <button id="btnMonitor" onclick="monitorKehadiran()" style="flex: 1; background: #2196f3; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer;">
+        <i class="fas fa-desktop"></i> Monitor Live
+    </button>
+    <button id="btnExport" onclick="exportLaporan()" style="flex: 1; background: #059669; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer;">
+        <i class="fas fa-file-excel"></i> Cetak Laporan
+    </button>
+</div>
+
+<div id="areaHasilAdmin" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-bottom: 15px; max-height: 200px; overflow-y: auto; font-size: 13px;">
+</div>
+<div class="divider"><span>INPUT IZIN / SAKIT</span></div>
             <div class="input-group">
                 <input type="text" id="idGuruIzin" placeholder="Masukkan ID Guru">
                 <i class="fas fa-times-circle input-icon" onclick="clearInput('idGuruIzin')"></i>
@@ -374,7 +387,7 @@
     <div id="overlay"></div>
 
     <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbyuH4IoF5cF4tg4Ad-BoHi035yzdZsRzYPrfrhw0PTACwQPfZZ8qnVFakE8rzcpFK9-UQ/exec';
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbzlVWGe41CqBXGCGncVk9DAXUE9X2shSrHLZY-AsClahBdIzvmYhZstG_CRyanCozDgKA/exec';
     let currentFacingMode = "environment";
     let isProcessing = false;
     const html5QrCode = new Html5Qrcode("reader");
@@ -633,6 +646,74 @@
         o.style.display = 'block';
     }
 
+// --- FITUR MONITOR & LAPORAN ADMIN ---
+    function monitorKehadiran() {
+        const area = document.getElementById('areaHasilAdmin');
+        const btn = document.getElementById('btnMonitor');
+        
+        area.style.display = "block";
+        area.innerHTML = "<div style='text-align:center; padding:10px;'><i class='fas fa-spinner fa-spin'></i> Memproses data...</div>";
+        btn.disabled = true;
+
+        fetch(`${scriptURL}?action=getMonitor`)
+            .then(res => res.json())
+            .then(res => {
+                if (res.status === "success") {
+                    let html = `<div style="margin-bottom:8px;"><strong>Belum Absen (${res.belum.length}):</strong><br>`;
+                    if (res.belum.length === 0) html += `<span style="color:#64748b; font-style:italic;">Semua guru sudah absen.</span>`;
+                    res.belum.forEach(g => {
+                        html += `<span style="color:#ef4444; display:block;">✘ ${g.nama}</span>`;
+                    });
+                    
+                    html += `</div><div style="border-top:1px solid #ddd; padding-top:8px;"><strong>Sudah Absen (${res.sudah.length}):</strong><br>`;
+                    if (res.sudah.length === 0) html += `<span style="color:#64748b; font-style:italic;">Belum ada data masuk.</span>`;
+                    res.sudah.forEach(g => {
+                        let ket = g.status === "H" ? "Hadir" : (g.status === "I" ? "Izin" : "Sakit");
+                        html += `<span style="color:#10b981; display:block;">✔ ${g.nama} <small style="color:#64748b">(${g.jam} - ${ket})</small></span>`;
+                    });
+                    area.innerHTML = html;
+                }
+            })
+            .catch(() => { area.innerHTML = "<div style='color:red;'>❌ Gagal memuat data.</div>"; })
+            .finally(() => { btn.disabled = false; });
+    }
+
+    function exportLaporan() {
+        const btn = document.getElementById('btnExport');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Menyiapkan...";
+        btn.disabled = true;
+
+        fetch(`${scriptURL}?action=getLaporan`)
+            .then(res => res.json())
+            .then(res => {
+                if (res.status === "success") {
+                    let tableHtml = `<table border="1" style="border-collapse:collapse; width:100%; font-family:sans-serif; font-size:12px;">`;
+                    res.data.forEach((row, idx) => {
+                        tableHtml += `<tr style="${idx === 0 ? 'background:#eee; font-weight:bold;' : ''}">`;
+                        row.forEach(cell => { tableHtml += `<td style="padding:5px;">${cell}</td>`; });
+                        tableHtml += `</tr>`;
+                    });
+                    tableHtml += `</table>`;
+
+                    const win = window.open("", "_blank");
+                    win.document.write(`<html><head><title>Laporan Absensi ${res.bln}</title>`);
+                    win.document.write(`<style>body{padding:20px; font-family:sans-serif;} table{width:100%; border-collapse:collapse;} td,th{padding:8px; border:1px solid #000;}</style>`);
+                    win.document.write(`</head><body>`);
+                    win.document.write(`<h3>Laporan Absensi SMP IT Al Fathonah - Bulan ${res.bln}</h3>`);
+                    win.document.write(tableHtml);
+                    win.document.write(`</body></html>`);
+                    win.document.close();
+                    win.print();
+                }
+            })
+            .catch(() => alert("Gagal mengambil data laporan!"))
+            .finally(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+    }
+        
     // --- PROSES ADMIN ---
 function prosesLogin() {
     const u = document.getElementById('userAdmin').value;
@@ -821,5 +902,6 @@ function prosesLogin() {
 </script>
 </body>
 </html>
+
 
 
