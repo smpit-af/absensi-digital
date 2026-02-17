@@ -374,374 +374,434 @@
     <div id="overlay"></div>
 
     <script>
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbym6-y4yVUEAzmFXfm_lrjYtoT0WLSRgDEe7-z--T5iyk2MMbAkjjZtiwYbgUoa7m9wMA/exec'; 
-        let currentFacingMode = "environment";
-        let isProcessing = false;
-        const html5QrCode = new Html5Qrcode("reader");
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbz88KQYkNvSz5pYF2ld5ebI0g4Dz_JhwrJtYg0GKqfOp2gf40CbAypcDVvluHokFKturw/exec';
+    let currentFacingMode = "environment";
+    let isProcessing = false;
+    const html5QrCode = new Html5Qrcode("reader");
 
-        function animateValue(id, start, end, duration) {
-            if (start === end) { document.getElementById(id).innerText = end; return; }
-            const obj = document.getElementById(id);
-            let startTimestamp = null;
-            const step = (timestamp) => {
-                if (!startTimestamp) startTimestamp = timestamp;
-                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                obj.innerText = Math.floor(progress * (end - start) + start);
-                if (progress < 1) window.requestAnimationFrame(step);
-            };
-            window.requestAnimationFrame(step);
+    // --- FUNGSI UTILITAS ---
+
+    function animateValue(id, start, end, duration) {
+        if (start === end) {
+            document.getElementById(id).innerText = end;
+            return;
         }
-
-        window.addEventListener('online', updateOnlineStatus);
-        window.addEventListener('offline', updateOnlineStatus);
-
-        function updateOnlineStatus() {
-            const status = document.getElementById('conn-status');
-            if (navigator.onLine) {
-                status.innerText = "Koneksi Terhubung (Online)";
-                status.className = "online-bar";
-                setTimeout(() => { status.style.display = 'none'; }, 3000);
-            } else {
-                status.innerText = "Koneksi Terputus (Offline)";
-                status.className = "offline-bar";
-                status.style.display = 'block';
-            }
-        }
-
-        function updateTime() {
-            const now = new Date();
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            document.getElementById('date').innerText = now.toLocaleDateString('id-ID', options);
-            document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', { hour12: false });
-        }
-        setInterval(updateTime, 1000);
-        updateTime();
-
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; resetFormInputs(id); }
-
-        function resetFormInputs(modalId) {
-            const modal = document.getElementById(modalId);
-            const inputs = modal.querySelectorAll('input, textarea');
-            inputs.forEach(input => {
-                input.value = '';
-                if(input.id === 'passAdmin') {
-                    input.type = 'password';
-                    document.getElementById('togglePass').className = 'fas fa-eye input-icon';
-                }
-            });
-            const selects = modal.querySelectorAll('select');
-            selects.forEach(select => select.selectedIndex = 0);
-        }
-
-        function clearInput(id) {
-            document.getElementById(id).value = '';
-            document.getElementById(id).focus();
-        }
-
-        function togglePassword(id, iconId) {
-            const field = document.getElementById(id);
-            const icon = document.getElementById(iconId);
-            if (field.type === "password") {
-                field.type = "text";
-                icon.className = "fas fa-eye-slash input-icon";
-            } else {
-                field.type = "password";
-                icon.className = "fas fa-eye input-icon";
-            }
-        }
-
-        function switchCamera() {
-            currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
-            html5QrCode.stop().then(() => { startScanner(); }).catch(err => console.error(err));
-        }
-
-        function startScanner() {
-            html5QrCode.start({ facingMode: currentFacingMode }, { fps: 15, qrbox: 250 }, onScanSuccess)
-                .catch(err => console.error(err));
-        }
-
-// Fungsi untuk membuat AI berbicara (Optimasi Suara Manusiawi)
-function bicara(teks) {
-    if (!window.speechSynthesis) return;
-
-    // Membatalkan suara yang sedang berjalan agar tidak tumpang tindih
-    window.speechSynthesis.cancel();
-
-    const msg = new SpeechSynthesisUtterance();
-    msg.text = teks;
-    msg.lang = 'id-ID';
-
-    // Ambil semua daftar suara yang tersedia di perangkat
-    let voices = window.speechSynthesis.getVoices();
-
-    // Prioritas 1: Mencari suara Google Bahasa Indonesia (Paling halus)
-    // Prioritas 2: Mencari suara bahasa Indonesia apapun yang tersedia
-    let selectedVoice = voices.find(v => v.name.includes('Google') && v.lang === 'id-ID') || 
-                        voices.find(v => v.lang === 'id-ID');
-
-    if (selectedVoice) {
-        msg.voice = selectedVoice;
+        const obj = document.getElementById(id);
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            obj.innerText = Math.floor(progress * (end - start) + start);
+            if (progress < 1) window.requestAnimationFrame(step);
+        };
+        window.requestAnimationFrame(step);
     }
 
-    // Pengaturan agar lebih mirip manusia
-    msg.rate = 1.0;  // Kecepatan normal
-    msg.pitch = 1.1; // Sedikit dinaikkan agar terdengar lebih ramah/ceria
-    msg.volume = 1.0;
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
 
-    window.speechSynthesis.speak(msg);
-}
+    function updateOnlineStatus() {
+        const status = document.getElementById('conn-status');
+        if (navigator.onLine) {
+            status.innerText = "Koneksi Terhubung (Online)";
+            status.className = "online-bar";
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        } else {
+            status.innerText = "Koneksi Terputus (Offline)";
+            status.className = "offline-bar";
+            status.style.display = 'block';
+        }
+    }
 
-// Tambahan: Trigger load suara untuk browser Chrome/Android
-window.speechSynthesis.onvoiceschanged = () => {
-    window.speechSynthesis.getVoices();
-};
+    function updateTime() {
+        const now = new Date();
+        const options = {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        };
+        document.getElementById('date').innerText = now.toLocaleDateString('id-ID', options);
+        document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', {
+            hour12: false
+        });
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
 
-function onScanSuccess(decodedText) {
-    const isModalOpen = document.querySelector('.modal-overlay[style*="display: flex"]');
-    if (isModalOpen || isProcessing) return;
+    // --- MANAJEMEN MODAL & INPUT ---
 
-    isProcessing = true;
-    html5QrCode.stop().then(() => {
-        showStatus("⏳ Memproses...", "loading");
-        const finalURL = `${scriptURL}?id=${encodeURIComponent(decodedText)}&t=${new Date().getTime()}`;
-        
-        fetch(finalURL)
-            .then(response => response.text().then(text => {
-                try { return { type: 'json', content: JSON.parse(text) }; } 
-                catch (e) { return { type: 'text', content: text }; }
-            }))
-            .then(res => {
-                if (res.type === 'json') {
-                    const data = res.content;
-                    
-                    // --- 1. LOGIKA IDENTITAS & SAPAAN ---
-                    // Membersihkan gelar
-                    let namaPanggilan = data.nama ? data.nama.split(',')[0] : "Bapak atau Ibu";
-                    
-                    // Menentukan sapaan berdasarkan Gender (L/P) dari Spreadsheet
-                    let sapaan = "";
-                    if (data.gender === "L") {
-                        sapaan = "Bapak ";
-                    } else if (data.gender === "P") {
-                        sapaan = "Ibu ";
-                    } else {
-                        sapaan = "Bapak atau Ibu "; // Cadangan jika kolom G kosong
+    function openModal(id) {
+        document.getElementById(id).style.display = 'flex';
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).style.display = 'none';
+        resetFormInputs(id);
+    }
+
+    function resetFormInputs(modalId) {
+        const modal = document.getElementById(modalId);
+        const inputs = modal.querySelectorAll('input, textarea');
+        inputs.forEach(input => {
+            input.value = '';
+            if (input.id === 'passAdmin') {
+                input.type = 'password';
+                document.getElementById('togglePass').className = 'fas fa-eye input-icon';
+            }
+        });
+        const selects = modal.querySelectorAll('select');
+        selects.forEach(select => select.selectedIndex = 0);
+    }
+
+    function clearInput(id) {
+        document.getElementById(id).value = '';
+        document.getElementById(id).focus();
+    }
+
+    function togglePassword(id, iconId) {
+        const field = document.getElementById(id);
+        const icon = document.getElementById(iconId);
+        if (field.type === "password") {
+            field.type = "text";
+            icon.className = "fas fa-eye-slash input-icon";
+        } else {
+            field.type = "password";
+            icon.className = "fas fa-eye input-icon";
+        }
+    }
+
+    // --- KONTROL SCANNER ---
+
+    function switchCamera() {
+        currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
+        html5QrCode.stop().then(() => {
+            startScanner();
+        }).catch(err => console.error(err));
+    }
+
+    function startScanner() {
+        html5QrCode.start({
+                facingMode: currentFacingMode
+            }, {
+                fps: 15,
+                qrbox: 250
+            }, onScanSuccess)
+            .catch(err => console.error(err));
+    }
+
+    // --- FITUR SUARA (AI) ---
+
+    function bicara(teks) {
+        if (!window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
+
+        const msg = new SpeechSynthesisUtterance();
+        msg.text = teks;
+        msg.lang = 'id-ID';
+
+        let voices = window.speechSynthesis.getVoices();
+        let selectedVoice = voices.find(v => v.name.includes('Google') && v.lang === 'id-ID') ||
+            voices.find(v => v.lang === 'id-ID');
+
+        if (selectedVoice) {
+            msg.voice = selectedVoice;
+        }
+
+        msg.rate = 1.0;
+        msg.pitch = 1.1;
+        msg.volume = 1.0;
+
+        window.speechSynthesis.speak(msg);
+    }
+
+    window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+    };
+
+    // --- LOGIKA UTAMA SCAN ---
+
+    function onScanSuccess(decodedText) {
+        const isModalOpen = document.querySelector('.modal-overlay[style*="display: flex"]');
+        if (isModalOpen || isProcessing) return;
+
+        isProcessing = true;
+        html5QrCode.stop().then(() => {
+            showStatus("⏳ Memproses...", "loading");
+            const finalURL = `${scriptURL}?id=${encodeURIComponent(decodedText)}&t=${new Date().getTime()}`;
+
+            fetch(finalURL)
+                .then(response => response.text().then(text => {
+                    try {
+                        return {
+                            type: 'json',
+                            content: JSON.parse(text)
+                        };
+                    } catch (e) {
+                        return {
+                            type: 'text',
+                            content: text
+                        };
                     }
+                }))
+                .then(res => {
+                    if (res.type === 'json') {
+                        const data = res.content;
 
-                    if (data.status === "success") {
-                        // --- 2. LOGIKA SUARA BERHASIL ---
-                        if (data.msg === "BERHASIL MASUK") {
-                            document.getElementById('soundSuccess').play().catch(e => {});
-                            bicara("Absen masuk berhasil. Selamat bertugas, " + sapaan + namaPanggilan);
-                        } else if (data.msg === "BERHASIL PULANG") {
-                            document.getElementById('soundSuccess').play().catch(e => {});
-                            bicara("Absen pulang berhasil. Hati-hati di jalan " + sapaan + namaPanggilan + ", selamat beristirahat.");
+                        // --- 1. LOGIKA IDENTITAS & SAPAAN ---
+                        let namaPanggilan = data.nama ? data.nama.split(',')[0] : "Bapak atau Ibu";
+                        let sapaan = "";
+                        if (data.gender === "L") {
+                            sapaan = "Bapak ";
+                        } else if (data.gender === "P") {
+                            sapaan = "Ibu ";
+                        } else {
+                            sapaan = "Bapak atau Ibu ";
                         }
 
-                        // --- 3. TAMPILAN FOTO (Tetap Sama) ---
-                        let fileId = "";
-                        if(data.foto && data.foto.includes("id=")) fileId = data.foto.split("id=")[1];
-                        else if (data.foto && data.foto.includes("/d/")) fileId = data.foto.split("/d/")[1].split("/")[0];
-                        let fotoUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400` : "https://via.placeholder.com/100?text=FOTO";
+                        if (data.status === "success") {
+                            // --- 2. LOGIKA SUARA BERHASIL ---
+                            if (data.msg === "BERHASIL MASUK") {
+                                document.getElementById('soundSuccess').play().catch(e => {});
+                                bicara("Absen masuk berhasil. Selamat bertugas, " + sapaan + namaPanggilan);
+                            } else if (data.msg === "BERHASIL PULANG") {
+                                document.getElementById('soundSuccess').play().catch(e => {});
+                                bicara("Absen pulang berhasil. Hati-hati di jalan " + sapaan + namaPanggilan + ", selamat beristirahat.");
+                            }
 
-                        let notifTerlambat = "";
-                        if (data.terlambat && data.menit > 0) {
-                            notifTerlambat = `<div class="animate__animated animate__shakeX" style="color: #ff3300; font-weight: 900; margin-top: 8px; background: white; border-radius: 8px; padding: 5px; font-size: 13px; border: 2px solid #ff3300;">⚠️ TERLAMBAT</div>`;
+                            // --- 3. TAMPILAN FOTO ---
+                            let fileId = "";
+                            if (data.foto && data.foto.includes("id=")) fileId = data.foto.split("id=")[1];
+                            else if (data.foto && data.foto.includes("/d/")) fileId = data.foto.split("/d/")[1].split("/")[0];
+                            let fotoUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400` : "https://via.placeholder.com/100?text=FOTO";
+
+                            let notifTerlambat = "";
+                            if (data.terlambat && data.menit > 0) {
+                                notifTerlambat = `<div class="animate__animated animate__shakeX" style="color: #ff3300; font-weight: 900; margin-top: 8px; background: white; border-radius: 8px; padding: 5px; font-size: 13px; border: 2px solid #ff3300;">⚠️ TERLAMBAT</div>`;
+                            }
+
+                            let htmlContent = `
+                                <img src="${fotoUrl}" class="profile-img" onerror="this.src='https://via.placeholder.com/100?text=FOTO'">
+                                <div style="font-size: 14px; margin-bottom: 5px; font-weight: 500;">${data.msg}</div>
+                                <div style="font-size: 18px; font-weight: bold; color: yellow;">${data.nama}</div>
+                                <div style="font-size: 13px; margin-top: 5px; background: rgba(0,0,0,0.2); display: inline-block; padding: 2px 10px; border-radius: 10px;">${data.jabatan}</div>
+                                ${notifTerlambat}
+                            `;
+                            showStatus(htmlContent, "success", true);
+
+                        } else {
+                            // --- 4. LOGIKA SUARA DITOLAK ---
+                            playError();
+                            if (data.msg.includes("SUDAH LENGKAP")) {
+                                bicara("Maaf " + sapaan + namaPanggilan + ", absensi Anda sudah lengkap hari ini.");
+                            } else if (data.msg.includes("Tidak ada jadwal") || data.msg.includes("DITOLAK")) {
+                                bicara("Maaf " + sapaan + namaPanggilan + ", Anda tidak dapat absen karena tidak memiliki jadwal mengajar hari ini.");
+                            } else {
+                                bicara("Maaf, permintaan absen ditolak.");
+                            }
+                            showStatus("⚠️ " + (data.msg || "Gagal"), "error");
                         }
-
-                        let htmlContent = `
-                            <img src="${fotoUrl}" class="profile-img" onerror="this.src='https://via.placeholder.com/100?text=FOTO'">
-                            <div style="font-size: 14px; margin-bottom: 5px; font-weight: 500;">${data.msg}</div>
-                            <div style="font-size: 18px; font-weight: bold; color: yellow;">${data.nama}</div>
-                            <div style="font-size: 13px; margin-top: 5px; background: rgba(0,0,0,0.2); display: inline-block; padding: 2px 10px; border-radius: 10px;">${data.jabatan}</div>
-                            ${notifTerlambat}
-                        `;
-                        showStatus(htmlContent, "success", true);
-
                     } else {
-                        // --- 4. LOGIKA SUARA DITOLAK (DENGAN SAPAAN) ---
                         playError();
-                        
-                        if (data.msg.includes("SUDAH LENGKAP")) {
-                            bicara("Maaf " + sapaan + namaPanggilan + ", absensi Anda sudah lengkap hari ini.");
-                        } 
-                        else if (data.msg.includes("Tidak ada jadwal") || data.msg.includes("DITOLAK")) {
-                            bicara("Maaf " + sapaan + namaPanggilan + ", Anda tidak dapat absen karena tidak memiliki jadwal mengajar hari ini.");
-                        } 
-                        else {
-                            bicara("Maaf, permintaan absen ditolak.");
-                        }
-                        
-                        showStatus("⚠️ " + (data.msg || "Gagal"), "error");
+                        showStatus(res.content, "error");
                     }
-                } else {
+                })
+                .catch((err) => {
                     playError();
-                    showStatus(res.content, "error");
+                    showStatus("❌ Gagal Terhubung ke Server", "error");
+                })
+                .finally(() => setTimeout(() => {
+                    document.getElementById('overlay').style.display = 'none';
+                    isProcessing = false;
+                    startScanner();
+                }, 4000));
+        });
+    }
+
+    function playError() {
+        if (navigator.vibrate) navigator.vibrate([300, 150, 300]);
+        document.getElementById('soundError').play().catch(e => {});
+    }
+
+    function showStatus(msg, type, isHTML = false) {
+        const o = document.getElementById('overlay');
+        if (isHTML) o.innerHTML = msg;
+        else o.innerText = msg;
+        o.className = type;
+        o.style.display = 'block';
+    }
+
+    // --- PROSES ADMIN ---
+
+    function prosesLogin() {
+        const u = document.getElementById('userAdmin').value;
+        const p = document.getElementById('passAdmin').value;
+        const btn = document.getElementById('btnLogin');
+        if (u === "admin" && p === "20253892") {
+            btn.innerText = "Memuat Panel...";
+            btn.disabled = true;
+            fetch(`${scriptURL}?action=getRingkasan`)
+                .then(res => res.json())
+                .then(data => {
+                    closeModal('modalLogin');
+                    openModal('modalIzin');
+                    animateValue("rekapHadir", 0, data.hadir, 1200);
+                    animateValue("rekapIzin", 0, data.izin, 1200);
+                    animateValue("rekapSakit", 0, data.sakit, 1200);
+                    animateValue("rekapAlpha", 0, data.alpha, 1200);
+                })
+                .catch(() => alert("Gagal mengambil ringkasan!"))
+                .finally(() => {
+                    btn.innerText = "Login";
+                    btn.disabled = false;
+                });
+        } else {
+            playError();
+            alert("Username atau Password Salah!");
+        }
+    }
+
+    function prosesLogout() {
+        if (confirm("Keluar dari mode Admin?")) closeModal('modalIzin');
+    }
+
+    function simpanIzin() {
+        const id = document.getElementById('idGuruIzin').value;
+        const status = document.getElementById('statusIzin').value;
+        const ket = document.getElementById('ketIzin').value;
+        const btn = document.getElementById('btnSimpanIzin');
+        if (!id || !ket) {
+            alert("Lengkapi data!");
+            return;
+        }
+        btn.disabled = true;
+        btn.innerText = "Mengirim...";
+        fetch(`${scriptURL}?action=tambahIzin&id=${id}&status=${status}&ket=${encodeURIComponent(ket)}`)
+            .then(res => res.text())
+            .then(data => {
+                if (data.includes("⚠️") || data.includes("❌")) playError();
+                alert(data);
+                closeModal('modalIzin');
+            })
+            .catch(() => {
+                playError();
+                alert("Gagal mengirim data!");
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerText = "Simpan Izin";
+            });
+    }
+
+    function simpanLibur() {
+        const tgl = document.getElementById('tglLibur').value;
+        const ket = document.getElementById('ketLibur').value;
+        const btn = document.getElementById('btnSimpanLibur');
+        if (!tgl || !ket) {
+            alert("Pilih tanggal dan isi keterangan!");
+            return;
+        }
+        btn.disabled = true;
+        btn.innerText = "Menyimpan...";
+        fetch(`${scriptURL}?action=tambahLibur&tanggal=${tgl}&ket=${encodeURIComponent(ket)}`)
+            .then(res => res.text())
+            .then(data => {
+                alert(data);
+                document.getElementById('tglLibur').value = '';
+                document.getElementById('ketLibur').value = '';
+            })
+            .catch(() => alert("Gagal menyimpan hari libur!"))
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerText = "Tambah Hari Libur";
+            });
+    }
+
+    function prosesCekStatus() {
+        const id = document.getElementById('idCek').value;
+        if (!id) return;
+        const btn = document.getElementById('btnProsesCek');
+        btn.disabled = true;
+        btn.innerText = "Mengecek...";
+        fetch(`${scriptURL}?action=cekStatus&id=${encodeURIComponent(id)}`)
+            .then(res => res.text())
+            .then(data => {
+                alert(data);
+                closeModal('modalCek');
+            })
+            .catch(() => {
+                playError();
+                alert("Gagal koneksi!");
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerText = "Lihat Status";
+            });
+    }
+
+    function bukaDaftarID() {
+        closeModal('modalCek');
+        openModal('modalDaftarID');
+        const container = document.getElementById('listGuruContainer');
+        container.innerHTML = '<div style="padding: 20px; text-align: center;"><i class="fas fa-spinner fa-spin"></i> Mengambil data...</div>';
+
+        fetch(`${scriptURL}?action=getDaftarGuru`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "success") {
+                    let html = '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
+                    html += '<tr style="background: #f4f4f4; position: sticky; top: 0;"><th style="padding: 10px; text-align:left; border-bottom: 2px solid #ddd;">Nama</th><th style="padding: 10px; text-align:center; border-bottom: 2px solid #ddd;">ID</th></tr>';
+                    data.data.forEach(g => {
+                        html += `<tr class="item-guru">
+                                    <td style="padding: 10px; border-bottom: 1px solid #eee;">${g.nama}</td>
+                                    <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; color: #2b59bc; text-align:center;">${g.id}</td>
+                                 </tr>`;
+                    });
+                    html += '</table>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<div style="padding: 20px; color: red; text-align:center;">Gagal memuat data.</div>';
                 }
             })
-            .catch((err) => { 
-                playError(); 
-                showStatus("❌ Gagal Terhubung ke Server", "error"); 
-            })
-            .finally(() => setTimeout(() => {
-                document.getElementById('overlay').style.display = 'none';
-                isProcessing = false;
-                startScanner();
-            }, 4000));
-    });
-}
+            .catch(() => {
+                container.innerHTML = '<div style="padding: 20px; color: red; text-align:center;">Koneksi bermasalah.</div>';
+            });
+    }
 
-        function playError() {
-            if (navigator.vibrate) navigator.vibrate([300, 150, 300]);
-            document.getElementById('soundError').play().catch(e => {});
-        }
-
-        function showStatus(msg, type, isHTML = false) {
-            const o = document.getElementById('overlay');
-            if(isHTML) o.innerHTML = msg; else o.innerText = msg;
-            o.className = type;
-            o.style.display = 'block';
-        }
-
-        function prosesLogin() {
-            const u = document.getElementById('userAdmin').value;
-            const p = document.getElementById('passAdmin').value;
-            const btn = document.getElementById('btnLogin');
-            if (u === "admin" && p === "20253892") {
-                btn.innerText = "Memuat Panel..."; btn.disabled = true;
-                fetch(`${scriptURL}?action=getRingkasan`)
-                    .then(res => res.json())
-                    .then(data => {
-                        closeModal('modalLogin');
-                        openModal('modalIzin');
-                        animateValue("rekapHadir", 0, data.hadir, 1200);
-                        animateValue("rekapIzin", 0, data.izin, 1200);
-                        animateValue("rekapSakit", 0, data.sakit, 1200);
-                        animateValue("rekapAlpha", 0, data.alpha, 1200);
-                    })
-                    .catch(() => alert("Gagal mengambil ringkasan!"))
-                    .finally(() => { btn.innerText = "Login"; btn.disabled = false; });
-            } else {
-                playError();
-                alert("Username atau Password Salah!");
-            }
-        }
-
-        function prosesLogout() { if(confirm("Keluar dari mode Admin?")) closeModal('modalIzin'); }
-
-        function simpanIzin() {
-            const id = document.getElementById('idGuruIzin').value;
-            const status = document.getElementById('statusIzin').value;
-            const ket = document.getElementById('ketIzin').value;
-            const btn = document.getElementById('btnSimpanIzin');
-            if (!id || !ket) { alert("Lengkapi data!"); return; }
-            btn.disabled = true; btn.innerText = "Mengirim...";
-            fetch(`${scriptURL}?action=tambahIzin&id=${id}&status=${status}&ket=${encodeURIComponent(ket)}`)
-                .then(res => res.text())
-                .then(data => {
-                    if (data.includes("⚠️") || data.includes("❌")) playError();
-                    alert(data); closeModal('modalIzin');
-                })
-                .catch(() => { playError(); alert("Gagal mengirim data!"); })
-                .finally(() => { btn.disabled = false; btn.innerText = "Simpan Izin"; });
-        }
-
-        function simpanLibur() {
-            const tgl = document.getElementById('tglLibur').value;
-            const ket = document.getElementById('ketLibur').value;
-            const btn = document.getElementById('btnSimpanLibur');
-            if (!tgl || !ket) { alert("Pilih tanggal dan isi keterangan!"); return; }
-            btn.disabled = true; btn.innerText = "Menyimpan...";
-            fetch(`${scriptURL}?action=tambahLibur&tanggal=${tgl}&ket=${encodeURIComponent(ket)}`)
-                .then(res => res.text())
-                .then(data => {
-                    alert(data);
-                    document.getElementById('tglLibur').value = '';
-                    document.getElementById('ketLibur').value = '';
-                })
-                .catch(() => alert("Gagal menyimpan hari libur!"))
-                .finally(() => { btn.disabled = false; btn.innerText = "Tambah Hari Libur"; });
-        }
-
-        function prosesCekStatus() {
-            const id = document.getElementById('idCek').value;
-            if (!id) return;
-            const btn = document.getElementById('btnProsesCek');
-            btn.disabled = true; btn.innerText = "Mengecek...";
-            fetch(`${scriptURL}?action=cekStatus&id=${encodeURIComponent(id)}`)
-                .then(res => res.text())
-                .then(data => { alert(data); closeModal('modalCek'); })
-                .catch(() => { playError(); alert("Gagal koneksi!"); })
-                .finally(() => { btn.disabled = false; btn.innerText = "Lihat Status"; });
-        }
-
-        // TAMBAHKAN DI BAGIAN PALING BAWAH SCRIPT
-function bukaDaftarID() {
-    closeModal('modalCek'); // Menutup modal input ID
-    openModal('modalDaftarID'); // Membuka modal daftar
-    const container = document.getElementById('listGuruContainer');
-    container.innerHTML = '<div style="padding: 20px; text-align: center;"><i class="fas fa-spinner fa-spin"></i> Mengambil data...</div>';
-
-    fetch(`${scriptURL}?action=getDaftarGuru`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === "success") {
-                let html = '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
-                html += '<tr style="background: #f4f4f4; position: sticky; top: 0;"><th style="padding: 10px; text-align:left; border-bottom: 2px solid #ddd;">Nama</th><th style="padding: 10px; text-align:center; border-bottom: 2px solid #ddd;">ID</th></tr>';
-                data.data.forEach(g => {
-                    html += `<tr class="item-guru">
-                                <td style="padding: 10px; border-bottom: 1px solid #eee;">${g.nama}</td>
-                                <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; color: #2b59bc; text-align:center;">${g.id}</td>
-                             </tr>`;
-                });
-                html += '</table>';
-                container.innerHTML = html;
-            } else {
-                container.innerHTML = '<div style="padding: 20px; color: red; text-align:center;">Gagal memuat data.</div>';
-            }
-        })
-        .catch(() => {
-            container.innerHTML = '<div style="padding: 20px; color: red; text-align:center;">Koneksi bermasalah.</div>';
+    function filterDaftarGuru() {
+        let input = document.getElementById('searchNamaGuru').value.toLowerCase();
+        let rows = document.querySelectorAll('.item-guru');
+        rows.forEach(row => {
+            let nama = row.cells[0].innerText.toLowerCase();
+            row.style.display = nama.includes(input) ? "" : "none";
         });
-}
+    }
 
-function filterDaftarGuru() {
-    let input = document.getElementById('searchNamaGuru').value.toLowerCase();
-    let rows = document.querySelectorAll('.item-guru');
-    rows.forEach(row => {
-        let nama = row.cells[0].innerText.toLowerCase();
-        row.style.display = nama.includes(input) ? "" : "none";
-    });
-}
-        
-        function bukaPrint() {
-    window.open(scriptURL + "?page=print", "_blank");
-}
+    function bukaPrint() {
+        window.open(scriptURL + "?page=print", "_blank");
+    }
 
-        function bukaJadwal() {
-            const btn = document.querySelector('.btn-jadwal');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Membuka...';
-            btn.disabled = true;
-            fetch(`${scriptURL}?action=getLinkJadwal`)
-                .then(res => res.text())
-                .then(link => {
-                    if (link && link.includes("http")) window.open(link, '_blank');
-                    else alert("Link jadwal belum diatur di Spreadsheet (Sel G2)!");
-                })
-                .catch(() => alert("Gagal mengambil link jadwal"))
-                .finally(() => { btn.innerHTML = originalText; btn.disabled = false; });
-        }
+    function bukaJadwal() {
+        const btn = document.querySelector('.btn-jadwal');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Membuka...';
+        btn.disabled = true;
+        fetch(`${scriptURL}?action=getLinkJadwal`)
+            .then(res => res.text())
+            .then(link => {
+                if (link && link.includes("http")) window.open(link, '_blank');
+                else alert("Link jadwal belum diatur di Spreadsheet (Sel G2)!");
+            })
+            .catch(() => alert("Gagal mengambil link jadwal"))
+            .finally(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+    }
 
-        window.onload = startScanner;
-    </script>
+    window.onload = startScanner;
+</script>
 </body>
 </html>
-
-
-
-
-
-
-
