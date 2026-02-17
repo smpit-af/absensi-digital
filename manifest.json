@@ -8,6 +8,7 @@
   "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#2b59bc",
+  "categories": ["education", "productivity"],
   "icons": [
     {
       "src": "logo/Logo.png",
@@ -19,7 +20,7 @@
       "src": "logo/Logo.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     }
   ]
 }
