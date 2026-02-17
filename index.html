@@ -487,7 +487,6 @@
     }
 
     // --- KONTROL SCANNER ---
-
     function switchCamera() {
         currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
         html5QrCode.stop().then(() => {
@@ -506,7 +505,6 @@
     }
 
     // --- FITUR SUARA (AI) ---
-
     function bicara(teks) {
         if (!window.speechSynthesis) return;
         window.speechSynthesis.cancel();
@@ -535,7 +533,6 @@
     };
 
     // --- LOGIKA UTAMA SCAN ---
-
     function onScanSuccess(decodedText) {
         const isModalOpen = document.querySelector('.modal-overlay[style*="display: flex"]');
         if (isModalOpen || isProcessing) return;
@@ -647,36 +644,48 @@
     }
 
 // --- FITUR MONITOR & LAPORAN ADMIN ---
-    function monitorKehadiran() {
-        const area = document.getElementById('areaHasilAdmin');
-        const btn = document.getElementById('btnMonitor');
-        
-        area.style.display = "block";
-        area.innerHTML = "<div style='text-align:center; padding:10px;'><i class='fas fa-spinner fa-spin'></i> Memproses data...</div>";
-        btn.disabled = true;
-
-        fetch(`${scriptURL}?action=getMonitor`)
-            .then(res => res.json())
-            .then(res => {
-                if (res.status === "success") {
-                    let html = `<div style="margin-bottom:8px;"><strong>Belum Absen (${res.belum.length}):</strong><br>`;
-                    if (res.belum.length === 0) html += `<span style="color:#64748b; font-style:italic;">Semua guru sudah absen.</span>`;
-                    res.belum.forEach(g => {
-                        html += `<span style="color:#ef4444; display:block;">✘ ${g.nama}</span>`;
-                    });
-                    
-                    html += `</div><div style="border-top:1px solid #ddd; padding-top:8px;"><strong>Sudah Absen (${res.sudah.length}):</strong><br>`;
-                    if (res.sudah.length === 0) html += `<span style="color:#64748b; font-style:italic;">Belum ada data masuk.</span>`;
-                    res.sudah.forEach(g => {
-                        let ket = g.status === "H" ? "Hadir" : (g.status === "I" ? "Izin" : "Sakit");
-                        html += `<span style="color:#10b981; display:block;">✔ ${g.nama} <small style="color:#64748b">(${g.jam} - ${ket})</small></span>`;
-                    });
-                    area.innerHTML = html;
-                }
-            })
-            .catch(() => { area.innerHTML = "<div style='color:red;'>❌ Gagal memuat data.</div>"; })
-            .finally(() => { btn.disabled = false; });
+   function monitorKehadiran() {
+    const area = document.getElementById('areaHasilAdmin');
+    const btn = document.getElementById('btnMonitor');
+    
+    // LOGIKA TOGGLE: Jika area sedang tampil, maka sembunyikan (tutup)
+    if (area.style.display === "block" && area.innerHTML !== "") {
+        area.style.display = "none";
+        area.innerHTML = ""; // Bersihkan isi agar fresh saat dibuka lagi
+        return; // Berhenti di sini
     }
+
+    // Jika area sedang tutup, maka jalankan proses ambil data (buka)
+    area.style.display = "block";
+    area.innerHTML = "<div style='text-align:center; padding:10px;'><i class='fas fa-spinner fa-spin'></i> Memproses data...</div>";
+    btn.disabled = true;
+
+    fetch(`${scriptURL}?action=getMonitor`)
+        .then(res => res.json())
+        .then(res => {
+            if (res.status === "success") {
+                let html = `<div style="margin-bottom:8px;"><strong>Belum Absen (${res.belum.length}):</strong><br>`;
+                if (res.belum.length === 0) html += `<span style="color:#64748b; font-style:italic;">Semua guru sudah absen.</span>`;
+                res.belum.forEach(g => {
+                    html += `<span style="color:#ef4444; display:block;">✘ ${g.nama}</span>`;
+                });
+                
+                html += `</div><div style="border-top:1px solid #ddd; padding-top:8px;"><strong>Sudah Absen (${res.sudah.length}):</strong><br>`;
+                if (res.sudah.length === 0) html += `<span style="color:#64748b; font-style:italic;">Belum ada data masuk.</span>`;
+                res.sudah.forEach(g => {
+                    let ket = g.status === "H" ? "Hadir" : (g.status === "I" ? "Izin" : (g.status === "S" ? "Sakit" : "Alpha"));
+                    html += `<span style="color:#10b981; display:block;">✔ ${g.nama} <small style="color:#64748b">(${g.jam} - ${ket})</small></span>`;
+                });
+                area.innerHTML = html;
+            }
+        })
+        .catch(() => { 
+            area.innerHTML = "<div style='color:red;'>❌ Gagal memuat data.</div>"; 
+        })
+        .finally(() => { 
+            btn.disabled = false; 
+        });
+}
 
     function exportLaporan() {
         const btn = document.getElementById('btnExport');
@@ -761,6 +770,8 @@ function prosesLogin() {
 }
 
     function prosesLogout() {
+        document.getElementById('areaHasilAdmin').style.display = 'none';
+document.getElementById('areaHasilAdmin').innerHTML = '';
         if (confirm("Keluar dari mode Admin?")) closeModal('modalIzin');
     }
 
@@ -902,6 +913,7 @@ function prosesLogin() {
 </script>
 </body>
 </html>
+
 
 
 
