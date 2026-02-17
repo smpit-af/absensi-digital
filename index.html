@@ -462,13 +462,41 @@
         }
 
 // Fungsi untuk membuat AI berbicara (Text-to-Speech)
+// Fungsi untuk membuat AI berbicara (Optimasi Suara Manusiawi)
 function bicara(teks) {
+    if (!window.speechSynthesis) return;
+
+    // Membatalkan suara yang sedang berjalan agar tidak tumpang tindih
+    window.speechSynthesis.cancel();
+
     const msg = new SpeechSynthesisUtterance();
     msg.text = teks;
-    msg.lang = 'id-ID'; // Bahasa Indonesia
-    msg.rate = 1.0;     // Kecepatan bicara
+    msg.lang = 'id-ID';
+
+    // Ambil semua daftar suara yang tersedia di perangkat
+    let voices = window.speechSynthesis.getVoices();
+
+    // Prioritas 1: Mencari suara Google Bahasa Indonesia (Paling halus)
+    // Prioritas 2: Mencari suara bahasa Indonesia apapun yang tersedia
+    let selectedVoice = voices.find(v => v.name.includes('Google') && v.lang === 'id-ID') || 
+                        voices.find(v => v.lang === 'id-ID');
+
+    if (selectedVoice) {
+        msg.voice = selectedVoice;
+    }
+
+    // Pengaturan agar lebih mirip manusia
+    msg.rate = 1.0;  // Kecepatan normal
+    msg.pitch = 1.1; // Sedikit dinaikkan agar terdengar lebih ramah/ceria
+    msg.volume = 1.0;
+
     window.speechSynthesis.speak(msg);
 }
+
+// Tambahan: Trigger load suara untuk browser Chrome/Android
+window.speechSynthesis.onvoiceschanged = () => {
+    window.speechSynthesis.getVoices();
+};
 
 function onScanSuccess(decodedText) {
     const isModalOpen = document.querySelector('.modal-overlay[style*="display: flex"]');
@@ -687,5 +715,6 @@ function filterDaftarGuru() {
     </script>
 </body>
 </html>
+
 
 
