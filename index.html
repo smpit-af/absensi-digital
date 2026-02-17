@@ -352,20 +352,25 @@
 <div id="areaHasilAdmin" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-bottom: 15px; max-height: 200px; overflow-y: auto; font-size: 13px;">
 </div>
 <div class="divider"><span>INPUT IZIN / SAKIT</span></div>
-            <div class="input-group">
-                <input type="text" id="idGuruIzin" placeholder="Masukkan ID Guru">
-                <i class="fas fa-times-circle input-icon" onclick="clearInput('idGuruIzin')"></i>
-            </div>
-            <div class="input-group">
-                <select id="statusIzin">
-                    <option value="I">Izin</option>
-                    <option value="S">Sakit</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <textarea id="ketIzin" placeholder="Keterangan..." rows="2" style="padding-right: 15px;"></textarea>
-            </div>
-            <button class="btn-submit" id="btnSimpanIzin" onclick="simpanIzin()">Simpan Izin</button>
+
+<div class="input-group">
+    <select id="idGuruIzin" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; appearance: none; background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%232b59bc%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22/%3E%3C/svg%3E') no-repeat right 12px center; background-size: 12px; background-color: #f9f9f9; font-size: 14px; cursor: pointer;">
+        <option value="">-- Pilih Nama Guru --</option>
+    </select>
+</div>
+
+<div class="input-group">
+    <select id="statusIzin" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; appearance: none; background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%232b59bc%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22/%3E%3C/svg%3E') no-repeat right 12px center; background-size: 12px; background-color: #f9f9f9; font-size: 14px; cursor: pointer;">
+        <option value="I">Izin</option>
+        <option value="S">Sakit</option>
+    </select>
+</div>
+
+<div class="input-group">
+    <textarea id="ketIzin" placeholder="Tulis alasan izin/sakit di sini..." rows="2" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; font-size: 14px; resize: none;"></textarea>
+</div>
+
+<button class="btn-submit" id="btnSimpanIzin" onclick="simpanIzin()">Simpan Data Izin</button>
             <div class="divider"><span>KELOLA HARI LIBUR</span></div>
             <div class="input-group">
                 <input type="date" id="tglLibur">
@@ -758,6 +763,7 @@ function prosesLogin() {
         .then(res => res.json())
         .then(data => {
             if (data.status === "success") {
+                muatDropdownGuru();
                 // Jika login berhasil, baru ambil data ringkasan
                 btn.innerText = "Memuat Panel...";
                 fetch(`${scriptURL}?action=getRingkasan`)
@@ -790,6 +796,26 @@ function prosesLogin() {
 document.getElementById('areaHasilAdmin').innerHTML = '';
         if (confirm("Keluar dari mode Admin?")) closeModal('modalIzin');
     }
+
+        function muatDropdownGuru() {
+    const dropdown = document.getElementById('idGuruIzin');
+    
+    // Ambil data dari server
+    fetch(`${scriptURL}?action=getDaftarGuru`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "success") {
+                dropdown.innerHTML = '<option value="">-- Pilih Nama Guru --</option>';
+                data.data.forEach(g => {
+                    let option = document.createElement('option');
+                    option.value = g.id;
+                    option.text = g.nama; // Menampilkan Nama saja agar rapi
+                    dropdown.appendChild(option);
+                });
+            }
+        })
+        .catch(err => console.error("Gagal muat daftar guru:", err));
+}
 
    function simpanIzin() {
     const id = document.getElementById('idGuruIzin').value;
@@ -953,6 +979,7 @@ document.getElementById('areaHasilAdmin').innerHTML = '';
 </script>
 </body>
 </html>
+
 
 
 
