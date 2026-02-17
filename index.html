@@ -66,28 +66,27 @@
         /* Container untuk membatasi area running text */
 .running-text-container {
     width: 100%;
-    background: rgba(0, 0, 0, 0.2); /* Hitam transparan tipis */
+    background: rgba(0, 0, 0, 0.3);
     overflow: hidden;
-    padding: 5px 0;
-    margin: 10px 0 5px 0;
-    border-radius: 5px;
+    padding: 6px 0;
+    margin: 5px 0 10px 0;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
 }
 
-/* Animasi Marquee */
 .marquee {
-    white-space: nowrap;
     display: inline-block;
-    animation: marquee 20s linear infinite;
+    white-space: nowrap;
+    animation: marquee 25s linear infinite; /* Durasi lebih lama agar nyaman dibaca */
 }
 
 .marquee span {
-    font-size: 11px;
-    color: #ffffff;
-    font-weight: 500;
-    padding-left: 100%; /* Mulai dari luar layar kanan */
+    font-size: 12px;
+    color: #ffcc00; /* Warna kuning agar menonjol */
+    font-weight: bold;
+    padding-left: 100vw;
 }
 
-/* Keyframes untuk pergerakan teks */
 @keyframes marquee {
     0% { transform: translate(0, 0); }
     100% { transform: translate(-100%, 0); }
@@ -382,6 +381,23 @@
         setInterval(updateTime, 1000);
         updateTime();
 
+        function loadPengumuman() {
+    fetch(`${scriptURL}?action=getPengumuman`)
+        .then(res => res.text())
+        .then(data => {
+            if(data && data.trim() !== "") {
+                document.getElementById('textPengumuman').innerText = data;
+            }
+        })
+        .catch(err => console.log("Gagal ambil pengumuman"));
+}
+
+// Panggil di window.onload
+window.addEventListener('load', () => {
+    loadPengumuman();
+    startScanner();
+});
+
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; resetFormInputs(id); }
 
@@ -607,5 +623,6 @@
 </body>
 
 </html>
+
 
 
