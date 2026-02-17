@@ -65,7 +65,7 @@
 .scanner-group {
             width: 100%;
             max-width: 340px; 
-            margin: 0px auto 5px; /* Jarak dari jam */
+            margin: 1px auto 5px; /* Jarak dari jam */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -282,17 +282,35 @@
         </footer>
     </div>
 
-    <div id="modalCek" class="modal-overlay">
-        <div class="modal-box animate__animated animate__zoomIn animate__faster">
-            <span class="close-modal" onclick="closeModal('modalCek')">×</span>
-            <h4>Intip Status Absen</h4>
-            <div class="input-group">
-                <input type="text" id="idCek" placeholder="Masukkan ID Guru Anda">
-                <i class="fas fa-times-circle input-icon" onclick="clearInput('idCek')"></i>
-            </div>
-            <button class="btn-submit" id="btnProsesCek" onclick="prosesCekStatus()">Lihat Status</button>
+  <div id="modalCek" class="modal-overlay">
+    <div class="modal-box animate__animated animate__zoomIn animate__faster">
+        <span class="close-modal" onclick="closeModal('modalCek')">×</span>
+        <h4>Intip Status Absen</h4>
+        <div class="input-group">
+            <input type="text" id="idCek" placeholder="Masukkan ID Guru Anda">
+            <i class="fas fa-times-circle input-icon" onclick="clearInput('idCek')"></i>
         </div>
+        <button class="btn-submit" id="btnProsesCek" onclick="prosesCekStatus()">Lihat Status</button>
+        
+        <div class="divider"><span>LUPA ID?</span></div>
+        <button class="btn-cek" style="background-color: #6c757d; font-size: 12px; padding: 10px;" onclick="bukaDaftarID()">
+            <i class="fas fa-users"></i> Cari ID Saya di Daftar Guru
+        </button>
     </div>
+</div>
+
+<div id="modalDaftarID" class="modal-overlay">
+    <div class="modal-box animate__animated animate__zoomIn animate__faster" style="max-width: 400px;">
+        <span class="close-modal" onclick="closeModal('modalDaftarID')">×</span>
+        <h4>Daftar ID Guru & Staf</h4>
+        <div class="input-group">
+            <input type="text" id="searchNamaGuru" placeholder="Ketik Nama Anda..." onkeyup="filterDaftarGuru()">
+            <i class="fas fa-search input-icon"></i>
+        </div>
+        <div id="listGuruContainer" style="max-height: 300px; overflow-y: auto; text-align: left; margin-top: 10px; border: 1px solid #eee; border-radius: 10px;">
+            </div>
+    </div>
+</div>
 
     <div id="modalLogin" class="modal-overlay">
         <div class="modal-box animate__animated animate__zoomIn animate__faster">
@@ -352,7 +370,7 @@
     <div id="overlay"></div>
 
     <script>
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbxLJ2mrElCMYkUL9iqSftMwNxrJ9jcUiumn1sq63zxNp7ZnJT_QFVt2Ae3WvZE9xRr-3w/exec'; 
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbznB-xgk9uPO-Tr145QUhMOvQat70BPfhShXlZ-hnbqGeZJEvTo_0XP1d5cud9Jw5xNDg/exec'; 
         let currentFacingMode = "environment";
         let isProcessing = false;
         const html5QrCode = new Html5Qrcode("reader");
@@ -600,6 +618,45 @@
                 .finally(() => { btn.disabled = false; btn.innerText = "Lihat Status"; });
         }
 
+        // TAMBAHKAN DI BAGIAN PALING BAWAH SCRIPT
+function bukaDaftarID() {
+    closeModal('modalCek'); // Menutup modal input ID
+    openModal('modalDaftarID'); // Membuka modal daftar
+    const container = document.getElementById('listGuruContainer');
+    container.innerHTML = '<div style="padding: 20px; text-align: center;"><i class="fas fa-spinner fa-spin"></i> Mengambil data...</div>';
+
+    fetch(`${scriptURL}?action=getDaftarGuru`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "success") {
+                let html = '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
+                html += '<tr style="background: #f4f4f4; position: sticky; top: 0;"><th style="padding: 10px; text-align:left; border-bottom: 2px solid #ddd;">Nama</th><th style="padding: 10px; text-align:center; border-bottom: 2px solid #ddd;">ID</th></tr>';
+                data.data.forEach(g => {
+                    html += `<tr class="item-guru">
+                                <td style="padding: 10px; border-bottom: 1px solid #eee;">${g.nama}</td>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; color: #2b59bc; text-align:center;">${g.id}</td>
+                             </tr>`;
+                });
+                html += '</table>';
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<div style="padding: 20px; color: red; text-align:center;">Gagal memuat data.</div>';
+            }
+        })
+        .catch(() => {
+            container.innerHTML = '<div style="padding: 20px; color: red; text-align:center;">Koneksi bermasalah.</div>';
+        });
+}
+
+function filterDaftarGuru() {
+    let input = document.getElementById('searchNamaGuru').value.toLowerCase();
+    let rows = document.querySelectorAll('.item-guru');
+    rows.forEach(row => {
+        let nama = row.cells[0].innerText.toLowerCase();
+        row.style.display = nama.includes(input) ? "" : "none";
+    });
+}
+
         function bukaJadwal() {
             const btn = document.querySelector('.btn-jadwal');
             const originalText = btn.innerHTML;
@@ -619,6 +676,7 @@
     </script>
 </body>
 </html>
+
 
 
 
