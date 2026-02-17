@@ -63,6 +63,36 @@
         #date { font-size: clamp(13px, 3.5vw, 15px); font-weight: 500; margin-bottom: 0px; }
         #clock { font-size: clamp(22px, 6.5vw, 30px); font-weight: bold; color: var(--secondary); margin-top: 4px; }
 
+        /* Container untuk membatasi area running text */
+.running-text-container {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.2); /* Hitam transparan tipis */
+    overflow: hidden;
+    padding: 5px 0;
+    margin: 10px 0 5px 0;
+    border-radius: 5px;
+}
+
+/* Animasi Marquee */
+.marquee {
+    white-space: nowrap;
+    display: inline-block;
+    animation: marquee 20s linear infinite;
+}
+
+.marquee span {
+    font-size: 11px;
+    color: #ffffff;
+    font-weight: 500;
+    padding-left: 100%; /* Mulai dari luar layar kanan */
+}
+
+/* Keyframes untuk pergerakan teks */
+@keyframes marquee {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(-100%, 0); }
+}
+
         #reader-wrapper {
             background: white; padding: 10px;
             border-radius: 25px; margin: 8px auto;
@@ -211,6 +241,12 @@
             <div id="date">Memuat Tanggal...</div>
             <div id="clock">00:00:00</div>
         </div>
+
+        <div class="running-text-container">
+    <div class="marquee">
+        <span>Selamat Datang di E-Absensi SMP IT Al Fathonah - Gunakan ID Guru/Staf Anda untuk melakukan presensi setiap hari Senin s/d Sabtu pukul 07:00 - 13:00 WIB.</span>
+    </div>
+</div>
 
         <div id="reader-wrapper">
             <div id="reader"></div>
@@ -571,3 +607,4 @@
 </body>
 
 </html>
+
