@@ -63,34 +63,32 @@
         #date { font-size: clamp(13px, 3.5vw, 15px); font-weight: 500; margin-bottom: 0px; }
         #clock { font-size: clamp(22px, 6.5vw, 30px); font-weight: bold; color: var(--secondary); margin-top: 4px; }
 
-        /* Container untuk membatasi area running text */
-.running-text-container {
-    width: 100%;
-    background: rgba(0, 0, 0, 0.3);
-    overflow: hidden;
-    padding: 6px 0;
-    margin: 5px 0 10px 0;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.1);
-}
+        .running-text-container {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            padding: 5px 0;
+            margin: 10px 0 5px 0;
+            border-radius: 5px;
+        }
 
-.marquee {
-    display: inline-block;
-    white-space: nowrap;
-    animation: marquee 25s linear infinite; /* Durasi lebih lama agar nyaman dibaca */
-}
+        .marquee {
+            white-space: nowrap;
+            display: inline-block;
+            animation: marquee 25s linear infinite;
+        }
 
-.marquee span {
-    font-size: 12px;
-    color: #ffcc00; /* Warna kuning agar menonjol */
-    font-weight: bold;
-    padding-left: 100vw;
-}
+        .marquee span {
+            font-size: 11px;
+            color: #ffffff;
+            font-weight: 500;
+            padding-left: 100%;
+        }
 
-@keyframes marquee {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(-100%, 0); }
-}
+        @keyframes marquee {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
 
         #reader-wrapper {
             background: white; padding: 10px;
@@ -242,10 +240,10 @@
         </div>
 
         <div class="running-text-container">
-    <div class="marquee">
-        <span>Selamat Datang di E-Absensi SMP IT Al Fathonah - Gunakan ID Guru/Staf Anda untuk melakukan presensi setiap hari Senin s/d Sabtu pukul 07:00 - 13:00 WIB.</span>
-    </div>
-</div>
+            <div class="marquee">
+                <span id="runningTextContent">Memuat Pengumuman Terbaru...</span>
+            </div>
+        </div>
 
         <div id="reader-wrapper">
             <div id="reader"></div>
@@ -326,7 +324,7 @@
                 <input type="date" id="tglLibur">
             </div>
             <div class="input-group">
-                <input type="text" id="ketLibur" placeholder="Keterangan Libur (Cth: Idul Fitri)">
+                <input type="text" id="ketLibur" placeholder="Keterangan Libur">
             </div>
             <button class="btn-submit" style="background: #333;" id="btnSimpanLibur" onclick="simpanLibur()">Tambah Hari Libur</button>
             <button class="btn-logout" onclick="prosesLogout()"><i class="fas fa-sign-out-alt"></i> Logout Admin</button>
@@ -338,11 +336,25 @@
     <div id="overlay"></div>
 
     <script>
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbyOFYsi10qiAGyak0-pVimEtDiAA6dDd4YeFfMOkR8X2nF9uZ0ItByqxiZCkScZQYiPfw/exec'; 
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbyovGEP4EktKqJz1fm__2KGziu-rtJogYL8twqLzF5OsqjAGOxWMoeH_qHSkViOdWzVig/exec'; 
         let currentFacingMode = "environment";
         let isProcessing = false;
         const html5QrCode = new Html5Qrcode("reader");
 
+        // FUNGSI UNTUK LOAD RUNNING TEXT DARI GAS
+        function loadRunningText() {
+            fetch(`${scriptURL}?action=getRunningText`)
+                .then(res => res.text())
+                .then(text => {
+                    // Jika teks tidak kosong, update isi marquee
+                    if (text && text.trim() !== "") {
+                        document.getElementById('runningTextContent').innerText = text;
+                    }
+                })
+                .catch(err => console.error("Gagal load running text:", err));
+        }
+
+        // --- SEMUA FUNGSI BERIKUTNYA TETAP SAMA (VALIDASI WAKTU AMAN) ---
         function animateValue(id, start, end, duration) {
             if (start === end) { document.getElementById(id).innerText = end; return; }
             const obj = document.getElementById(id);
@@ -380,23 +392,6 @@
         }
         setInterval(updateTime, 1000);
         updateTime();
-
-        function loadPengumuman() {
-    fetch(`${scriptURL}?action=getPengumuman`)
-        .then(res => res.text())
-        .then(data => {
-            if(data && data.trim() !== "") {
-                document.getElementById('textPengumuman').innerText = data;
-            }
-        })
-        .catch(err => console.log("Gagal ambil pengumuman"));
-}
-
-// Panggil di window.onload
-window.addEventListener('load', () => {
-    loadPengumuman();
-    startScanner();
-});
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; resetFormInputs(id); }
@@ -453,14 +448,11 @@ window.addEventListener('load', () => {
                 
                 fetch(finalURL)
                     .then(response => {
-                        // Membaca respon sebagai teks terlebih dahulu untuk menghindari crash JSON parsing
                         return response.text().then(text => {
                             try {
-                                // Coba ubah teks menjadi objek JSON
                                 const data = JSON.parse(text);
                                 return { type: 'json', content: data };
                             } catch (e) {
-                                // Jika gagal, berarti respon adalah pesan teks biasa (String)
                                 return { type: 'text', content: text };
                             }
                         });
@@ -501,7 +493,6 @@ window.addEventListener('load', () => {
                                 showStatus("⚠️ " + (data.msg || "Gagal"), "error");
                             }
                         } else {
-                            // JIKA HASILNYA ADALAH TEKS BIASA (NOTIFIKASI HARI MINGGU/SABAR/DLL)
                             playError();
                             showStatus(res.content, "error");
                         }
@@ -612,17 +603,16 @@ window.addEventListener('load', () => {
                 .then(res => res.text())
                 .then(link => {
                     if (link && link.includes("http")) window.open(link, '_blank');
-                    else alert("Link jadwal belum diatur di Spreadsheet (Sel G2)!");
+                    else alert("Link jadwal belum diatur!");
                 })
                 .catch(() => alert("Gagal mengambil link jadwal"))
                 .finally(() => { btn.innerHTML = originalText; btn.disabled = false; });
         }
 
-        window.onload = startScanner;
+        window.onload = function() {
+            startScanner();
+            loadRunningText(); // Menjalankan fungsi ambil teks saat web dibuka
+        };
     </script>
 </body>
-
 </html>
-
-
-
