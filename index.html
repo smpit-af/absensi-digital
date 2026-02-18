@@ -387,7 +387,7 @@
     <div id="overlay"></div>
 
     <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbzlVWGe41CqBXGCGncVk9DAXUE9X2shSrHLZY-AsClahBdIzvmYhZstG_CRyanCozDgKA/exec';
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbyUxm4DZb3y9ka505lA2aC6Ek5wcV4Tn1ovRF7j0v-qfAiuSXJxcm4Ls6nraDgWVa1Gkg/exec';
     let currentFacingMode = "environment";
     let isProcessing = false;
     const html5QrCode = new Html5Qrcode("reader");
@@ -611,7 +611,7 @@ const hour = now.getHours();
 if (hour < 7) {
     // Jika scan dilakukan sebelum jam 07:00
     bicara("Maaf, waktu absensi dibuka pukul 07:00 pagi.");
-} else if (hour >= 23) {
+} else if (hour >= 13) {
     // Jika scan dilakukan setelah jam 13:00
     bicara("Maaf, batas waktu absensi hari ini telah berakhir.");
 } else if (data.msg.includes("SUDAH LENGKAP")) {
@@ -968,3 +968,4 @@ document.getElementById('areaHasilAdmin').innerHTML = '';
 </script>
 </body>
 </html>
+
