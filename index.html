@@ -779,7 +779,7 @@ function monitorKehadiran() {
                 
                 // --- BAGIAN 1: BELUM ABSEN (DIKEMBALIKAN) ---
                 if (res.belum && res.belum.length > 0) {
-                    html += `<strong><i class="fas fa-user-times"></i> Belum Absen / Alpha (${res.belum.length}):</strong>`;
+                    html += `<strong><i class="fas fa-user-times"></i> Belum Absen (${res.belum.length}):</strong>`;
                     res.belum.forEach((g, idx) => {
                         html += `
                         <div class="baris-guru" style="color:#ef4444;">
@@ -1081,6 +1081,7 @@ document.getElementById('areaHasilAdmin').innerHTML = '';
 </script>
 </body>
 </html>
+
 
 
 
