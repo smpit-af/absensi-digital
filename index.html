@@ -635,15 +635,25 @@
                             showStatus(htmlContent, "success", true);
 
                         } else {
-                            // --- 4. LOGIKA SUARA DITOLAK ---
-                            playError();
-                            if (data.msg.includes("SUDAH LENGKAP")) {
-                                bicara("Maaf " + sapaan + namaPanggilan + ", absensi Anda sudah lengkap hari ini.");
-                            } else if (data.msg.includes("Tidak ada jadwal") || data.msg.includes("DITOLAK")) {
-                                bicara("Maaf " + sapaan + namaPanggilan + ", Anda tidak dapat absen karena tidak memiliki jadwal mengajar hari ini.");
-                            } else {
-                                bicara("Maaf, permintaan absen ditolak.");
-                            }
+                           // --- 4. LOGIKA SUARA DITOLAK (SESUAI PERMINTAAN) ---
+playError();
+if (data.msg.includes("BELUM DIBUKA") || data.msg.includes("SUDAH TUTUP") || data.msg.includes("WAKTU")) {
+    // Notifikasi Suara untuk batasan jam 07:00 - 13:00
+    bicara("Maaf " + sapaan + namaPanggilan + ", absensi hanya dibuka pukul 07:00 sampai 13:00 siang.");
+} else if (data.msg.includes("COOLDOWN") || data.msg.includes("TUNGGU")) {
+    // Notifikasi Suara untuk Cooldown (Scan beruntun)
+    bicara("Mohon tunggu sebentar, " + sapaan + namaPanggilan + ". Anda baru saja melakukan scan.");
+} else if (data.msg.includes("SUDAH LENGKAP")) {
+    bicara("Maaf " + sapaan + namaPanggilan + ", absensi Anda sudah lengkap hari ini.");
+} else if (data.msg.includes("jadwal") || data.msg.includes("DITOLAK")) {
+    // Notifikasi Suara untuk tidak ada jadwal
+    bicara("Maaf " + sapaan + namaPanggilan + ", Anda tidak dapat absen karena tidak memiliki jadwal hari ini.");
+} else if (data.msg.includes("Minggu")) {
+    // Notifikasi Suara khusus hari Minggu
+    bicara("Maaf " + sapaan + namaPanggilan + ", hari Minggu absensi tidak aktif.");
+} else {
+    bicara("Maaf, permintaan absen ditolak.");
+}
                             showStatus("⚠️ " + (data.msg || "Gagal"), "error");
                         }
                     } else {
@@ -1007,6 +1017,7 @@ document.getElementById('areaHasilAdmin').innerHTML = '';
 </script>
 </body>
 </html>
+
 
 
 
