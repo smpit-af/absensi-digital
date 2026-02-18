@@ -635,44 +635,36 @@
                             showStatus(htmlContent, "success", true);
 
                         } else {
-// --- 4. LOGIKA SUARA DITOLAK (DIPERBAIKI) ---
+// --- 4. LOGIKA SUARA DITOLAK (REVISI TOTAL) ---
                         playError();
 
-                        // Ambil pesan dari server dan ubah ke huruf besar agar pengecekan akurat
                         const msgServer = data.msg ? data.msg.toUpperCase() : "";
-
-                        // Konstruksi kalimat penolakan yang sopan
                         let kalimatTolak = "";
 
+                        // A. LOGIKA TANPA NAMA (WAKTU & LIBUR)
                         if (msgServer.includes("WAKTU") || msgServer.includes("JAM") || msgServer.includes("BUKA") || msgServer.includes("TUTUP")) {
-                            // Jika ditolak karena batas jam 07:00 - 13:00
-                            kalimatTolak = "Maaf " + sapaan + namaPanggilan + ", waktu absensi telah berakhir atau belum dibuka.";
+                            kalimatTolak = "Maaf, waktu absensi telah berakhir atau belum dibuka. Scan hanya bisa dilakukan pukul 07:00 sampai 13:00 siang.";
                         } 
-                        else if (msgServer.includes("MINGGU")) {
-                            // Jika discan hari Minggu
-                            kalimatTolak = "Maaf " + sapaan + namaPanggilan + ", hari Minggu absensi tidak aktif.";
+                        else if (msgServer.includes("MINGGU") || msgServer.includes("LIBUR")) {
+                            kalimatTolak = "Maaf, hari ini adalah hari libur. Absensi tidak aktif.";
                         }
+                        
+                        // B. LOGIKA DENGAN NAMA (JADWAL, COOLDOWN, LENGKAP)
                         else if (msgServer.includes("COOLDOWN") || msgServer.includes("TUNGGU")) {
-                            // Jika scan beruntun (cooldown)
                             kalimatTolak = "Mohon tunggu sebentar " + sapaan + namaPanggilan + ", Anda baru saja melakukan scan.";
                         } 
                         else if (msgServer.includes("LENGKAP") || msgServer.includes("SUDAH ABSEN")) {
-                            // Jika sudah absen masuk & pulang
                             kalimatTolak = "Maaf " + sapaan + namaPanggilan + ", absensi Anda sudah lengkap hari ini.";
                         } 
                         else if (msgServer.includes("JADWAL")) {
-                            // Jika memang tidak ada jadwal di hari tersebut
                             kalimatTolak = "Maaf " + sapaan + namaPanggilan + ", Anda tidak memiliki jadwal mengajar hari ini.";
                         } 
                         else {
-                            // Kegagalan umum lainnya
-                            kalimatTolak = "Maaf " + sapaan + namaPanggilan + ", permintaan absen Anda ditolak.";
+                            // Gagal umum lainnya
+                            kalimatTolak = "Maaf " + sapaan + namaPanggilan + ", permintaan absen ditolak.";
                         }
 
-                        // Jalankan suara sesuai kalimat di atas
                         bicara(kalimatTolak);
-                        
-                        // Tampilkan pesan teks di layar
                         showStatus("⚠️ " + (data.msg || "Gagal"), "error");
                         }
                     } else {
@@ -1036,6 +1028,7 @@ document.getElementById('areaHasilAdmin').innerHTML = '';
 </script>
 </body>
 </html>
+
 
 
 
