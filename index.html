@@ -451,7 +451,7 @@
     <div id="overlay"></div>
 
     <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbyUxm4DZb3y9ka505lA2aC6Ek5wcV4Tn1ovRF7j0v-qfAiuSXJxcm4Ls6nraDgWVa1Gkg/exec';
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbweMvJCrFZo3FJkN2jHK2Orft0ZsEyrB2fgHon2O7WsZmD4Udb13J_Sb49J0odLO1sbsA/exec';
     let currentFacingMode = "environment";
     let isProcessing = false;
     const html5QrCode = new Html5Qrcode("reader");
@@ -746,15 +746,30 @@ showStatus("⚠️ " + (data.msg || "Gagal"), "error");
 // --- FITUR MONITOR & LAPORAN ADMIN ---
 /* --- PERBAIKAN MONITOR ADMIN (JAVASCRIPT) --- */
 function formatWaktu(val) {
+    // 1. Jika data kosong atau tanda strip
     if (!val || val === "" || val === "-" || val === "00:00:00") return "";
+    
+    // 2. Jika data sudah berupa string jam (contoh: "07:30:00" atau "07:30")
+    // Kita langsung ambil HH:mm agar tidak diproses sebagai Date yang rumit
+    if (typeof val === 'string' && val.includes(':')) {
+        let parts = val.split(':');
+        return parts[0].padStart(2, '0') + ":" + parts[1].padStart(2, '0');
+    }
+
+    // 3. Jika data berupa objek Date (dari Apps Script)
     try {
         let d = new Date(val);
-        // Menghapus masalah tahun 1899
-        if (isNaN(d.getTime()) || d.getFullYear() < 2000) return "";
+        if (isNaN(d.getTime())) return "";
+        
+        // Tetap filter tahun 1899 agar tidak muncul angka aneh
+        if (d.getFullYear() < 2000 && d.getFullYear() > 0) return ""; 
+
         let jam = d.getHours().toString().padStart(2, '0');
         let menit = d.getMinutes().toString().padStart(2, '0');
         return `${jam}:${menit}`;
-    } catch (e) { return ""; }
+    } catch (e) { 
+        return ""; 
+    }
 }
 
 function monitorKehadiran() {
@@ -1081,6 +1096,7 @@ document.getElementById('areaHasilAdmin').innerHTML = '';
 </script>
 </body>
 </html>
+
 
 
 
