@@ -177,7 +177,7 @@
             font-weight: bold; font-size: 15px; cursor: pointer; margin-bottom: 10px;
         }
 
-    /* --- PERBAIKAN MONITOR ADMIN (CSS) --- */
+   /* --- PERBAIKAN MONITOR ADMIN (CSS) --- */
 #areaHasilAdmin {
     text-align: left;
     background: #f8fafc;
@@ -185,7 +185,7 @@
     border-radius: 12px;
     margin-top: 10px;
     border: 1px solid #e2e8f0;
-    max-height: 380px; 
+    max-height: 400px; 
     overflow-y: auto;
 }
 
@@ -196,39 +196,48 @@
     font-size: 13px;
     border-bottom: 2px solid #eee;
     padding-bottom: 5px;
-    margin-top: 10px;
+    margin-top: 15px;
 }
 
-/* Memastikan baris guru menggunakan Flexbox agar Nama di kiri & Jam di kanan */
 .baris-guru {
     display: flex !important;
     justify-content: space-between;
-    align-items: center;
-    padding: 7px 0;
+    align-items: center; /* Sejajar tengah secara vertikal */
+    padding: 10px 0;
     border-bottom: 1px dashed #ddd;
-    font-size: 11px;
 }
 
 .baris-guru:last-child {
     border-bottom: none;
 }
 
-/* Area Nama Guru agar tidak menabrak Jam */
-.nama-guru {
+/* Area Nama & ID (ID ditaruh di bawah nama) */
+.info-guru {
+    display: flex;
+    flex-direction: column; /* Membuat nama dan ID bertumpuk vertikal */
     flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis; /* Nama panjang otomatis jadi titik-titik ... */
     padding-right: 10px;
-    font-weight: 500;
 }
 
-/* Area Jam agar sejajar lurus vertikal */
+.nama-teks {
+    font-size: 12px;
+    font-weight: bold;
+    color: inherit;
+}
+
+.id-teks {
+    font-size: 10px;
+    opacity: 0.6;
+    margin-top: 2px;
+}
+
+/* Area Jam agar sejajar lurus */
 .jam-log {
     min-width: 90px;
     text-align: right;
     font-family: 'Courier New', monospace;
     font-weight: bold;
+    font-size: 12px;
     letter-spacing: 0.5px;
 }
 
@@ -735,28 +744,17 @@ showStatus("⚠️ " + (data.msg || "Gagal"), "error");
     }
 
 // --- FITUR MONITOR & LAPORAN ADMIN ---
-// Fungsi pembantu agar jam akurat dan tidak muncul "1899"
+/* --- PERBAIKAN MONITOR ADMIN (JAVASCRIPT) --- */
 function formatWaktu(val) {
     if (!val || val === "" || val === "-" || val === "00:00:00") return "";
-    
     try {
-        // Jika data dari spreadsheet berupa objek Date
         let d = new Date(val);
-        
-        // Cek apakah date valid
-        if (isNaN(d.getTime())) return "";
-
-        // Ambil jam dan menit secara manual
+        // Menghapus masalah tahun 1899
+        if (isNaN(d.getTime()) || d.getFullYear() < 2000) return "";
         let jam = d.getHours().toString().padStart(2, '0');
         let menit = d.getMinutes().toString().padStart(2, '0');
-        
-        // Google Sheets sering mengirim 00:00 untuk data kosong, kita saring di sini
-        if (jam === "00" && menit === "00" && d.getFullYear() < 2000) return "";
-
         return `${jam}:${menit}`;
-    } catch (e) {
-        return "";
-    }
+    } catch (e) { return ""; }
 }
 
 function monitorKehadiran() {
@@ -770,7 +768,7 @@ function monitorKehadiran() {
     }
 
     area.style.display = "block";
-    area.innerHTML = "<div style='text-align:center; padding:10px;'><i class='fas fa-spinner fa-spin'></i> Memproses...</div>";
+    area.innerHTML = "<div style='text-align:center; padding:10px; color:#333;'><i class='fas fa-spinner fa-spin'></i> Memuat data live...</div>";
     btn.disabled = true;
 
     fetch(`${scriptURL}?action=getMonitor`)
@@ -779,43 +777,60 @@ function monitorKehadiran() {
             if (res.status === "success") {
                 let html = "";
                 
-                // Gabungkan Belum Absen & Sudah Terdata dengan format seragam
-                html += `<strong>Status Kehadiran Live:</strong><br>`;
+                // --- BAGIAN 1: BELUM ABSEN (DIKEMBALIKAN) ---
+                if (res.belum && res.belum.length > 0) {
+                    html += `<strong><i class="fas fa-user-times"></i> Belum Absen / Alpha (${res.belum.length}):</strong>`;
+                    res.belum.forEach((g, idx) => {
+                        html += `
+                        <div class="baris-guru" style="color:#ef4444;">
+                            <div class="info-guru">
+                                <span class="nama-teks">${idx + 1}. ${g.nama}</span>
+                                <span class="id-teks">ID: ${g.id}</span>
+                            </div>
+                            <span class="jam-log">- | -</span>
+                        </div>`;
+                    });
+                }
                 
-                // Gabungkan semua data untuk ditampilkan secara berurutan
-                let semuaGuru = [...res.sudah]; 
-                
-                semuaGuru.forEach((g, idx) => {
-                    let warnaStatus = "#333"; 
-                    if (g.status === "H") warnaStatus = "#10b981";
-                    else if (g.status === "I") warnaStatus = "#2196f3";
-                    else if (g.status === "S") warnaStatus = "#f59e0b";
-                    else if (g.status === "A") warnaStatus = "#ef4444";
-                    else if (g.status === "-") warnaStatus = "#a855f7";
+                // --- BAGIAN 2: SUDAH TERDATA ---
+                if (res.sudah && res.sudah.length > 0) {
+                    html += `<strong><i class="fas fa-user-check"></i> Sudah Terdata (${res.sudah.length}):</strong>`;
+                    res.sudah.forEach((g, idx) => {
+                        let warnaStatus = "#333"; 
+                        if (g.status === "H") warnaStatus = "#10b981";
+                        else if (g.status === "I") warnaStatus = "#2196f3";
+                        else if (g.status === "S") warnaStatus = "#f59e0b";
+                        else if (g.status === "A") warnaStatus = "#ef4444";
+                        else if (g.status === "-") warnaStatus = "#a855f7";
 
-                    let jamM = formatWaktu(g.jamMasuk);
-                    let jamP = formatWaktu(g.jamPulang);
-                    
-                    // Logika tampilan: Jika jam kosong, jangan tampilkan tanda "-" di antara jam
-                    let jamTampil = "";
-                    if (jamM && jamP) jamTampil = `${jamM} | ${jamP}`;
-                    else if (jamM) jamTampil = `${jamM} | --:--`;
-                    else jamTampil = "-";
+                        let jamM = formatWaktu(g.jamMasuk);
+                        let jamP = formatWaktu(g.jamPulang);
+                        
+                        let jamTampil = "";
+                        if (g.status === "-" || g.status === "A" || g.status === "I" || g.status === "S") {
+                            jamTampil = "-";
+                        } else {
+                            let m = jamM ? jamM : "--:--";
+                            let p = jamP ? jamP : "--:--";
+                            jamTampil = `${m} | ${p}`;
+                        }
 
-                    html += `
-                    <div class="baris-guru" style="color:${warnaStatus};">
-                        <span class="nama-guru">${idx + 1}. ${g.nama} <small style="opacity:0.6;">(${g.id})</small></span>
-                        <span class="jam-log">${jamTampil}</span>
-                    </div>`;
-                });
-
-                area.innerHTML = html;
+                        html += `
+                        <div class="baris-guru" style="color:${warnaStatus};">
+                            <div class="info-guru">
+                                <span class="nama-teks">${idx + 1}. ${g.nama}</span>
+                                <span class="id-teks">ID: ${g.id}</span>
+                            </div>
+                            <span class="jam-log">${jamTampil}</span>
+                        </div>`;
+                    });
+                }
+                area.innerHTML = html || "<div style='text-align:center; padding:10px;'>Data tidak ditemukan.</div>";
             }
         })
-        .catch(err => { area.innerHTML = "❌ Gagal memuat data."; })
+        .catch(err => { area.innerHTML = "❌ Gagal memuat."; })
         .finally(() => { btn.disabled = false; });
 }
-
     function exportLaporan() {
         const btn = document.getElementById('btnExport');
         const originalText = btn.innerHTML;
@@ -1066,6 +1081,7 @@ document.getElementById('areaHasilAdmin').innerHTML = '';
 </script>
 </body>
 </html>
+
 
 
 
