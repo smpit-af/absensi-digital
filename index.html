@@ -602,39 +602,48 @@
                             showStatus(htmlContent, "success", true);
 
                         } else {
-    // --- 4. LOGIKA SUARA DITOLAK ---
-    playError();
+// --- 4. LOGIKA SUARA DITOLAK ---
+playError();
 
-    const now = new Date();
-    const hour = now.getHours();
+const now = new Date();
+const hour = now.getHours();
+const day = now.getDay(); // 0 = Minggu
 
-    // Cek apakah pesan mengandung kata "detik" (biasanya indikasi cooldown)
-    if (data.msg.includes("detik")) {
-        // Mengambil angka dari pesan, misal: "Tunggu 15 detik" -> "15"
-        const sisaDetik = data.msg.match(/\d+/); 
-        if (sisaDetik) {
-            bicara(`Mohon tunggu ${sisaDetik[0]} detik lagi sebelum scan kembali.`);
-        } else {
-            bicara("Mohon tunggu sebentar.");
-        }
-    } 
-    else if (hour < 7) {
-        bicara("Maaf, waktu absensi dibuka pukul 07:00 pagi.");
-    } 
-    else if (hour >= 13) {
-        bicara("Maaf, batas waktu absensi hari ini telah berakhir.");
-    } 
-    else if (data.msg.includes("SUDAH LENGKAP")) {
-        bicara("Maaf, absensi Anda sudah lengkap hari ini.");
-    } 
-    else if (data.msg.includes("Tidak ada jadwal") || data.msg.includes("DITOLAK")) {
-        bicara("Maaf, Anda tidak dapat absen karena tidak memiliki jadwal mengajar hari ini.");
-    } 
-    else {
-        bicara("Maaf, permintaan absen ditolak.");
-    }
+// 1. Ditolak karena hari Minggu (Prioritas Utama)
+if (day === 0) {
+    bicara("Maaf, hari ini hari Minggu. Sistem absensi dinonaktifkan.");
+}
+// 2. Ditolak karena hari Libur (Pesan dari GAS)
+else if (data.msg.includes("LIBUR")) {
+    bicara("Maaf, hari ini adalah hari libur sekolah.");
+}
+// 3. Ditolak karena scan kurang dari jam 07:00
+else if (hour < 7) {
+    bicara("Maaf, waktu absensi belum dibuka. Silakan kembali pukul 07:00 pagi.");
+}
+// 4. Ditolak karena scan lebih dari jam 13:00
+else if (hour >= 13) {
+    bicara("Maaf, batas waktu absensi hari ini telah berakhir.");
+}
+// 5. Ditolak karena sedang cooldown (Sesuai sisa waktu)
+else if (data.msg.includes("detik")) {
+    const sisaDetik = data.msg.match(/\d+/);
+    bicara(`Mohon tunggu ${sisaDetik ? sisaDetik[0] : ''} detik lagi sebelum scan kembali.`);
+}
+// 6. Ditolak karena absensi sudah lengkap (Dengan sapaan)
+else if (data.msg.includes("SUDAH LENGKAP")) {
+    bicara(`Maaf ${sapaan}${namaPanggilan}, absensi Anda sudah lengkap untuk hari ini.`);
+}
+// 7. Ditolak karena tidak ada jadwal atau jam tambahan (Dengan sapaan)
+else if (data.msg.includes("Tidak ada jadwal") || data.msg.includes("DITOLAK")) {
+    bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak dapat absen karena tidak memiliki jadwal mengajar hari ini.`);
+}
+// 8. Pesan error umum (Jika tidak ada kondisi di atas yang terpenuhi)
+else {
+    bicara("Maaf, permintaan absen ditolak.");
+}
 
-    showStatus("⚠️ " + (data.msg || "Gagal"), "error");
+showStatus("⚠️ " + (data.msg || "Gagal"), "error");
 }
                     } else {
                         playError();
@@ -976,6 +985,7 @@ document.getElementById('areaHasilAdmin').innerHTML = '';
 </script>
 </body>
 </html>
+
 
 
 
