@@ -602,48 +602,57 @@
                             showStatus(htmlContent, "success", true);
 
                         } else {
-// --- 4. LOGIKA SUARA DITOLAK ---
-playError();
+                            // --- 4. LOGIKA SUARA DITOLAK (PERBAIKAN SAPAAN & STATUS) ---
+                            playError();
 
-// A. PRIORITAS PESAN DARI SERVER
-const msgUpper = data.msg ? data.msg.toUpperCase() : "";
+                            // Pastikan sapaan diperbarui berdasarkan data gender dari server
+                            let sapaanAkurat = "Bapak atau Ibu ";
+                            if (data.gender === "L") {
+                                sapaanAkurat = "Bapak ";
+                            } else if (data.gender === "P") {
+                                sapaanAkurat = "Ibu ";
+                            }
 
-if (msgUpper.includes("IZIN")) {
-    bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata izin hari ini.`);
-}
-else if (msgUpper.includes("SAKIT")) {
-    bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata sakit. Semoga lekas sembuh.`);
-}
-else if (msgUpper.includes("MINGGU")) {
-    bicara("Maaf, hari ini hari Minggu. Sistem absensi dinonaktifkan.");
-}
-else if (msgUpper.includes("LIBUR")) {
-    bicara("Maaf, hari ini adalah hari libur sekolah.");
-}
-else if (msgUpper.includes("SUDAH LENGKAP")) {
-    bicara(`Maaf ${sapaan}${namaPanggilan}, absensi Anda sudah lengkap untuk hari ini.`);
-} 
-else if (msgUpper.includes("SABAR")) {
-    const sisaDetik = data.msg.match(/\d+/);
-    bicara(`Mohon tunggu ${sisaDetik ? sisaDetik[0] : ''} detik lagi sebelum scan kembali.`);
-}
-else if (msgUpper.includes("TIDAK ADA JADWAL") || msgUpper.includes("DITOLAK")) {
-    bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak dapat absen karena tidak memiliki jadwal mengajar hari ini.`);
-}
+                            const msgUpper = data.msg ? data.msg.toUpperCase() : "";
+                            const hour = new Date().getHours();
 
-// B. CEK LOGIKA WAKTU LOKAL (CADANGAN)
-else if (new Date().getHours() < 7) {
-    bicara("Maaf, waktu absensi belum dibuka. Silakan kembali pukul 07:00 pagi.");
-} 
-else if (new Date().getHours() >= 13) {
-    bicara("Maaf, batas waktu absensi hari ini telah berakhir.");
-} 
-else {
-    bicara("Maaf, permintaan absen ditolak.");
-}
+                            // A. PRIORITAS PESAN DARI SERVER
+                            if (msgUpper.includes("IZIN")) {
+                                bicara(`Maaf ${sapaanAkurat}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata izin hari ini.`);
+                            }
+                            else if (msgUpper.includes("SAKIT")) {
+                                bicara(`Maaf ${sapaanAkurat}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata sakit. Semoga lekas sembuh.`);
+                            }
+                            else if (msgUpper.includes("MINGGU")) {
+                                bicara("Maaf, hari ini hari Minggu. Sistem absensi dinonaktifkan.");
+                            }
+                            else if (msgUpper.includes("LIBUR")) {
+                                bicara("Maaf, hari ini adalah hari libur sekolah.");
+                            }
+                            else if (msgUpper.includes("SUDAH LENGKAP")) {
+                                bicara(`Maaf ${sapaanAkurat}${namaPanggilan}, absensi Anda sudah lengkap untuk hari ini.`);
+                            } 
+                            else if (msgUpper.includes("SABAR")) {
+                                const sisaDetik = data.msg.match(/\d+/);
+                                bicara(`Mohon tunggu ${sisaDetik ? sisaDetik[0] : ''} detik lagi sebelum scan kembali.`);
+                            }
+                            else if (msgUpper.includes("JADWAL") || msgUpper.includes("DITOLAK")) {
+                                bicara(`Maaf ${sapaanAkurat}${namaPanggilan}, Anda tidak dapat absen karena tidak memiliki jadwal mengajar hari ini.`);
+                            }
 
-showStatus("⚠️ " + (data.msg || "Gagal"), "error");
-}
+                            // B. CEK LOGIKA WAKTU LOKAL (CADANGAN)
+                            else if (hour < 7) {
+                                bicara("Maaf, waktu absensi belum dibuka. Silakan kembali pukul 07:00 pagi.");
+                            } 
+                            else if (hour >= 13) {
+                                bicara("Maaf, batas waktu absensi hari ini telah berakhir.");
+                            } 
+                            else {
+                                bicara("Maaf, permintaan absen ditolak.");
+                            }
+
+                            showStatus("⚠️ " + (data.msg || "Gagal"), "error");
+                        }
                     } else {
                         playError();
                         showStatus(res.content, "error");
@@ -984,3 +993,4 @@ document.getElementById('areaHasilAdmin').innerHTML = '';
 </script>
 </body>
 </html>
+
