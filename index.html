@@ -27,17 +27,12 @@
             
         body {
             margin: 0; padding: 0;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Segoe UI', Roboto, sans-serif;
             background-color: var(--primary);
             display: flex; justify-content: center;
             align-items: flex-start; 
             min-height: 100vh; color: white;
             overflow-x: hidden;
-        }
-
-        /* --- PERBAIKAN FONT GLOBAL UNTUK SEMUA INPUT --- */
-        input, select, textarea, button {
-            font-family: 'Segoe UI', Roboto, sans-serif !important;
         }
 
         #conn-status {
@@ -66,10 +61,11 @@
         #date { font-size: clamp(13px, 3.5vw, 15px); font-weight: 500; margin-bottom: -1px; }
         #clock { font-size: clamp(22px, 6.5vw, 30px); font-weight: bold; color: var(--secondary); margin-top: 4px; line-height: 1.1; }
 
-        .scanner-group {
+        /* Container pembungkus agar lebarnya sama */
+.scanner-group {
             width: 100%;
             max-width: 340px; 
-            margin: 1px auto 5px;
+            margin: 1px auto 5px; /* Jarak dari jam */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -77,13 +73,13 @@
 
         .running-text-container {
             width: 100%;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.6); /* Warna background transparan gelap */
             overflow: hidden;
             padding: 4px 0;
-            margin-bottom: -1px;
-            border-radius: 20px 20px 0 0;
+            margin-bottom: -1;
+            border-radius: 20px 20px 0 0; /* Menempel di atas scanner */
             border-bottom: 1px solid rgba(255,255,255,0.1);
-            display: block;
+            display: block; /* Pastikan muncul */
         }
 
         .marquee {
@@ -95,9 +91,9 @@
 
         .marquee span {
             font-size: 10px;
-            color: #ffcc00;
+            color: #ffcc00; /* Warna kuning agar kontras */
             font-weight: bold;
-            padding-right: 50px;
+            padding-right: 50px; /* Jarak antar pengulangan teks */
             display: inline-block;
         }
 
@@ -109,7 +105,7 @@
         #reader-wrapper {
             background: white; 
             padding: 10px;
-            border-radius: 0 0 25px 25px;
+            border-radius: 0 0 25px 25px; /* Menempel di bawah teks */
             margin: 0 !important; 
             width: 100%;
             position: relative;
@@ -179,25 +175,6 @@
             width: 100%; background: var(--primary); color: white;
             border: none; padding: 14px; border-radius: 14px;
             font-weight: bold; font-size: 15px; cursor: pointer; margin-bottom: 10px;
-        }
-
-        /* --- PENYELARASAN IKON DROPDOWN DAN KALENDER --- */
-        #idGuruIzin, #statusIzin {
-            appearance: none;
-            -webkit-appearance: none;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%232b59bc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>');
-            background-repeat: no-repeat;
-            background-position: right 15px center;
-            background-size: 18px;
-            padding-right: 45px;
-        }
-
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%232b59bc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>') no-repeat;
-            background-position: center;
-            cursor: pointer;
-            width: 20px;
-            height: 20px;
         }
 
         .btn-logout {
@@ -305,7 +282,7 @@
         </footer>
     </div>
 
-<div id="modalCek" class="modal-overlay">
+  <div id="modalCek" class="modal-overlay">
     <div class="modal-box animate__animated animate__zoomIn animate__faster">
         <span class="close-modal" onclick="closeModal('modalCek')">×</span>
         <h4>Intip Status Absen</h4>
@@ -356,61 +333,51 @@
             <span class="close-modal" onclick="closeModal('modalIzin')">×</span>
             <h4>Panel Control Admin</h4>
             <div class="dashboard-grid">
-                <div class="dash-item bg-hadir"><span>Hadir</span><b id="rekapHadir">0</b></div>
-                <div class="dash-item bg-izin"><span>Izin</span><b id="rekapIzin">0</b></div>
-                <div class="dash-item bg-sakit"><span>Sakit</span><b id="rekapSakit">0</b></div>
-                <div class="dash-item bg-alpha"><span>Alpha</span><b id="rekapAlpha">0</b></div>
-            </div>
+    <div class="dash-item bg-hadir"><span>Hadir</span><b id="rekapHadir">0</b></div>
+    <div class="dash-item bg-izin"><span>Izin</span><b id="rekapIzin">0</b></div>
+    <div class="dash-item bg-sakit"><span>Sakit</span><b id="rekapSakit">0</b></div>
+    <div class="dash-item bg-alpha"><span>Alpha</span><b id="rekapAlpha">0</b></div>
+</div>
 
-            <div class="divider"><span>FITUR MONITORING & LAPORAN</span></div>
-            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-                <button id="btnMonitor" onclick="monitorKehadiran()" style="flex: 1; background: #2196f3; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer;">
-                    <i class="fas fa-desktop"></i> Monitor Live
-                </button>
-                <button id="btnExport" onclick="exportLaporan()" style="flex: 1; background: #059669; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer;">
-                    <i class="fas fa-file-excel"></i> Cetak Laporan
-                </button>
-            </div>
+<div class="divider"><span>FITUR MONITORING & LAPORAN</span></div>
+<div style="display: flex; gap: 8px; margin-bottom: 10px;">
+    <button id="btnMonitor" onclick="monitorKehadiran()" style="flex: 1; background: #2196f3; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer;">
+        <i class="fas fa-desktop"></i> Monitor Live
+    </button>
+    <button id="btnExport" onclick="exportLaporan()" style="flex: 1; background: #059669; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer;">
+        <i class="fas fa-file-excel"></i> Cetak Laporan
+    </button>
+</div>
 
-            <div id="areaHasilAdmin" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-bottom: 15px; max-height: 200px; overflow-y: auto; font-size: 13px;">
-            </div>
-            
-            <div class="divider"><span>INPUT IZIN / SAKIT</span></div>
+<div id="areaHasilAdmin" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-bottom: 15px; max-height: 200px; overflow-y: auto; font-size: 13px;">
+</div>
+<div class="divider"><span>INPUT IZIN / SAKIT</span></div>
             <div class="input-group">
-                <select id="idGuruIzin">
-                    <option value="">-- Pilih Nama Guru --</option>
-                </select>
+                <input type="text" id="idGuruIzin" placeholder="Masukkan ID Guru">
+                <i class="fas fa-times-circle input-icon" onclick="clearInput('idGuruIzin')"></i>
             </div>
-
             <div class="input-group">
                 <select id="statusIzin">
                     <option value="I">Izin</option>
                     <option value="S">Sakit</option>
                 </select>
             </div>
-
             <div class="input-group">
-                <textarea id="ketIzin" placeholder="Tulis alasan izin/sakit di sini..." rows="2" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; font-size: 14px; resize: none;"></textarea>
+                <textarea id="ketIzin" placeholder="Keterangan..." rows="2" style="padding-right: 15px;"></textarea>
             </div>
-
-            <button class="btn-submit" id="btnSimpanIzin" onclick="simpanIzin()">Simpan Data Izin</button>
-            
+            <button class="btn-submit" id="btnSimpanIzin" onclick="simpanIzin()">Simpan Izin</button>
             <div class="divider"><span>KELOLA HARI LIBUR</span></div>
             <div class="input-group">
-                <input type="date" id="tglLibur" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; background-color: #f9f9f9; font-size: 14px; color: #333;">
+                <input type="date" id="tglLibur">
             </div>
             <div class="input-group">
-                <input type="text" id="ketLibur" placeholder="Keterangan Libur (Cth: Idul Fitri)" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; background-color: #f9f9f9; font-size: 14px;">
+                <input type="text" id="ketLibur" placeholder="Keterangan Libur (Cth: Idul Fitri)">
             </div>
-            <button class="btn-submit" style="background: #333; border-radius: 10px;" id="btnSimpanLibur" onclick="simpanLibur()">
-                <i class="fas fa-calendar-plus"></i> Tambah Hari Libur
-            </button>
-
-            <div class="divider"><span>CETAK KODE</span></div>
-            <button class="btn-submit" style="background: #10b981;" onclick="window.open(scriptURL + '?page=print', '_blank')">
-                <i class="fas fa-qrcode"></i> GENERATE SEMUA KARTU QR
-            </button>
-            
+            <button class="btn-submit" style="background: #333;" id="btnSimpanLibur" onclick="simpanLibur()">Tambah Hari Libur</button>
+            <div class="divider"><span>ALAT CETAK</span></div>
+<button class="btn-submit" style="background: #10b981;" onclick="window.open(scriptURL + '?page=print', '_blank')">
+    <i class="fas fa-qrcode"></i> GENERATE SEMUA KARTU QR
+</button>
             <button class="btn-logout" onclick="prosesLogout()"><i class="fas fa-sign-out-alt"></i> Logout Admin</button>
         </div>
     </div>
@@ -635,45 +602,16 @@
                             showStatus(htmlContent, "success", true);
 
                         } else {
-                        // --- 4. LOGIKA SUARA DITOLAK (REVISI TOTAL) ---
-                        playError();
-
-                        const msgServer = data.msg ? data.msg.toUpperCase() : "";
-                        let kalimatTolak = "";
-
-                        // --- 4. LOGIKA SUARA DITOLAK (REVISI SPESIFIK) ---
-                        playError();
-
-                        const msgServer = data.msg ? data.msg.toUpperCase() : "";
-                        let kalimatTolak = "";
-
-                        // 1. LOGIKA WAKTU (TANPA NAMA/SAPAAN)
-                        if (msgServer.includes("BELUM DIBUKA") || (msgServer.includes("WAKTU") && new Date().getHours() < 7)) {
-                            kalimatTolak = "Maaf, absensi dibuka pukul 07:00 pagi.";
-                        } 
-                        else if (msgServer.includes("TUTUP") || msgServer.includes("BERAKHIR") || (msgServer.includes("WAKTU") && new Date().getHours() >= 13)) {
-                            kalimatTolak = "Maaf, batas waktu absensi hari ini telah berakhir.";
-                        } 
-                        else if (msgServer.includes("MINGGU") || msgServer.includes("LIBUR")) {
-                            kalimatTolak = "Maaf, hari ini adalah hari libur. Absensi tidak aktif.";
-                        }
-                        
-                        // 2. LOGIKA PERSONAL (PAKAI NAMA/SAPAAN)
-                        else if (msgServer.includes("COOLDOWN") || msgServer.includes("TUNGGU")) {
-                            kalimatTolak = "Mohon tunggu sebentar " + sapaan + namaPanggilan + ", Anda baru saja melakukan scan.";
-                        } 
-                        else if (msgServer.includes("LENGKAP") || msgServer.includes("SUDAH ABSEN")) {
-                            kalimatTolak = "Maaf " + sapaan + namaPanggilan + ", absensi Anda sudah lengkap hari ini.";
-                        } 
-                        else if (msgServer.includes("JADWAL") || msgServer.includes("DITOLAK")) {
-                            kalimatTolak = "Maaf " + sapaan + namaPanggilan + ", Anda tidak memiliki jadwal mengajar hari ini.";
-                        } 
-                        else {
-                            kalimatTolak = "Maaf " + sapaan + namaPanggilan + ", permintaan absen ditolak.";
-                        }
-
-                        bicara(kalimatTolak);
-                        showStatus("⚠️ " + (data.msg || "Gagal"), "error");
+                            // --- 4. LOGIKA SUARA DITOLAK ---
+                            playError();
+                            if (data.msg.includes("SUDAH LENGKAP")) {
+                                bicara("Maaf " + sapaan + namaPanggilan + ", absensi Anda sudah lengkap hari ini.");
+                            } else if (data.msg.includes("Tidak ada jadwal") || data.msg.includes("DITOLAK")) {
+                                bicara("Maaf " + sapaan + namaPanggilan + ", Anda tidak dapat absen karena tidak memiliki jadwal mengajar hari ini.");
+                            } else {
+                                bicara("Maaf, permintaan absen ditolak.");
+                            }
+                            showStatus("⚠️ " + (data.msg || "Gagal"), "error");
                         }
                     } else {
                         playError();
@@ -820,7 +758,6 @@ function prosesLogin() {
         .then(res => res.json())
         .then(data => {
             if (data.status === "success") {
-                muatDropdownGuru();
                 // Jika login berhasil, baru ambil data ringkasan
                 btn.innerText = "Memuat Panel...";
                 fetch(`${scriptURL}?action=getRingkasan`)
@@ -853,26 +790,6 @@ function prosesLogin() {
 document.getElementById('areaHasilAdmin').innerHTML = '';
         if (confirm("Keluar dari mode Admin?")) closeModal('modalIzin');
     }
-
-        function muatDropdownGuru() {
-    const dropdown = document.getElementById('idGuruIzin');
-    
-    // Ambil data dari server
-    fetch(`${scriptURL}?action=getDaftarGuru`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === "success") {
-                dropdown.innerHTML = '<option value="">-- Pilih Nama Guru --</option>';
-                data.data.forEach(g => {
-                    let option = document.createElement('option');
-                    option.value = g.id;
-                    option.text = g.nama; // Menampilkan Nama saja agar rapi
-                    dropdown.appendChild(option);
-                });
-            }
-        })
-        .catch(err => console.error("Gagal muat daftar guru:", err));
-}
 
    function simpanIzin() {
     const id = document.getElementById('idGuruIzin').value;
@@ -1036,18 +953,3 @@ document.getElementById('areaHasilAdmin').innerHTML = '';
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
