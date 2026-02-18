@@ -177,16 +177,16 @@
             font-weight: bold; font-size: 15px; cursor: pointer; margin-bottom: 10px;
         }
 
-        /* Styling khusus untuk area Monitor Live Admin agar rapi berurutan */
+     /* Styling khusus untuk area Monitor Live Admin agar rapi berurutan */
 #areaHasilAdmin {
-    text-align: left; /* Supaya daftar nama rata kiri */
+    text-align: left;
     background: #f8fafc;
     padding: 15px;
     border-radius: 15px;
     margin-top: 15px;
     border: 1px solid #e2e8f0;
     max-height: 400px;
-    overflow-y: auto; /* Jika daftar guru sangat banyak, bisa di-scroll */
+    overflow-y: auto;
 }
 
 #areaHasilAdmin strong {
@@ -198,18 +198,40 @@
     padding-bottom: 5px;
 }
 
-/* Mengatur spasi antar baris nama guru agar tidak menempel */
-#areaHasilAdmin span {
-    padding: 4px 0;
+/* --- BAGIAN YANG DIUBAH TOTAL --- */
+/* Mengatur baris nama agar Nama di kiri dan Jam di kanan */
+#areaHasilAdmin .baris-guru {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
     border-bottom: 1px dashed #eee;
     line-height: 1.4;
+    font-size: 12px;
 }
 
-#areaHasilAdmin span:last-child {
+#areaHasilAdmin .baris-guru:last-child {
     border-bottom: none;
 }
 
-/* Mengatur tampilan ID di dalam kurung agar lebih redup tapi tetap jelas */
+/* Mengatur teks nama agar tidak menabrak jam */
+#areaHasilAdmin .nama-guru {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 10px;
+}
+
+/* Mengatur angka jam agar rata dan rapi */
+#areaHasilAdmin .jam-log {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    min-width: 85px;
+    text-align: right;
+}
+/* --- SELESAI PERUBAHAN --- */
+
 #areaHasilAdmin strong[style*="color:#64748b"] {
     font-weight: normal;
     font-size: 11px;
@@ -719,11 +741,27 @@ showStatus("⚠️ " + (data.msg || "Gagal"), "error");
     }
 
 // --- FITUR MONITOR & LAPORAN ADMIN ---
+// Fungsi pembantu untuk format jam (Letakkan di atas fungsi monitorKehadiran)
+function formatJamKehadiran(val) {
+    if (!val || val === "" || val === "-") return "-";
+    // Jika data berupa string jam langsung (HH:mm:ss)
+    if (typeof val === 'string' && val.includes(':')) {
+        return val.substring(0, 5); // Ambil HH:mm saja
+    }
+    // Jika data berupa objek Date
+    try {
+        let d = new Date(val);
+        if (isNaN(d.getTime())) return "-";
+        return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
+    } catch (e) {
+        return "-";
+    }
+}
+
 function monitorKehadiran() {
     const area = document.getElementById('areaHasilAdmin');
     const btn = document.getElementById('btnMonitor');
     
-    // Logika Toggle (Buka-Tutup)
     if (area.style.display === "block" && area.innerHTML !== "") {
         area.style.display = "none";
         area.innerHTML = "";
@@ -738,14 +776,13 @@ function monitorKehadiran() {
         .then(res => res.json())
         .then(res => {
             if (res.status === "success") {
-                // --- 1. BAGIAN BELUM MELAKUKAN ABSEN ---
+                // --- 1. BAGIAN BELUM ABSEN ---
                 let html = `<div style="margin-bottom:12px;"><strong>Belum Melakukan Absen (${res.belum.length}):</strong><br>`;
                 if (res.belum.length === 0) {
-                    html += `<span style="color:#64748b; font-style:italic;">Semua guru sudah terdata.</span>`;
+                    html += `<span style="color:#64748b; font-style:italic; font-size:12px;">Semua guru sudah terdata.</span>`;
                 } else {
                     res.belum.forEach((g, idx) => {
-                        // Format: 1. Nama Guru (ID)
-                        html += `<span style="display:block; font-size:13px; margin-top:2px;">${idx + 1}. ${g.nama} <strong style="color:#64748b;">(${g.id})</strong></span>`;
+                        html += `<span style="display:block; font-size:12px; border-bottom:1px dashed #eee; padding:3px 0;">${idx + 1}. ${g.nama} <small style="color:#bbb;">(${g.id})</small></span>`;
                     });
                 }
                 html += `</div>`;
@@ -753,29 +790,33 @@ function monitorKehadiran() {
                 // --- 2. BAGIAN SUDAH TERDATA ---
                 html += `<div style="border-top:2px solid #eee; padding-top:8px;"><strong>Sudah Terdata (${res.sudah.length}):</strong><br>`;
                 if (res.sudah.length === 0) {
-                    html += `<span style="color:#64748b; font-style:italic;">Belum ada data masuk.</span>`;
+                    html += `<span style="color:#64748b; font-style:italic; font-size:12px;">Belum ada data masuk.</span>`;
                 } else {
                     res.sudah.forEach((g, idx) => {
                         let warnaStatus = "black"; 
+                        if (g.status === "H") warnaStatus = "#10b981";      // Hijau
+                        else if (g.status === "I") warnaStatus = "#2196f3"; // Biru
+                        else if (g.status === "S") warnaStatus = "#f59e0b"; // Kuning
+                        else if (g.status === "A") warnaStatus = "#ef4444"; // Merah
+                        else if (g.status === "-") warnaStatus = "#a855f7"; // Ungu
 
-                        // Logika Warna berdasarkan Status dari Server
-                        if (g.status === "H") warnaStatus = "#10b981"; // Hijau (Hadir)
-                        else if (g.status === "I") warnaStatus = "#2196f3"; // Biru (Izin)
-                        else if (g.status === "S") warnaStatus = "#f59e0b"; // Kuning (Sakit)
-                        else if (g.status === "A") warnaStatus = "#ef4444"; // Merah (Alpha)
-                        else if (g.status === "-") warnaStatus = "#a855f7"; // Ungu (Tidak Ada Jadwal)
+                        // Logika Jam: Jika Alpha (A) atau Tanpa Jadwal (-), paksa "-"
+                        // Jika Izin (I) atau Sakit (S), biasanya jam juga "-"
+                        let jamM = (g.status === "A" || g.status === "-" || g.status === "I" || g.status === "S") ? "-" : formatJamKehadiran(g.jamMasuk);
+                        let jamP = (g.status === "A" || g.status === "-" || g.status === "I" || g.status === "S") ? "-" : formatJamKehadiran(g.jamPulang);
 
-                        // Format: 1. Nama Guru (ID) dengan warna status
-                        html += `<span style="color:${warnaStatus}; display:block; font-weight:500; font-size:13px; margin-top:2px;">
-                                    ${idx + 1}. ${g.nama} <strong>(${g.id})</strong>
-                                 </span>`;
+                        html += `<div style="color:${warnaStatus}; display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:5px 0; border-bottom:1px dashed #eee;">
+                                    <span style="flex:1;">${idx + 1}. ${g.nama} <small style="opacity:0.6;">(${g.id})</small></span>
+                                    <span style="font-family:monospace; font-weight:bold; min-width:85px; text-align:right;">${jamM} | ${jamP}</span>
+                                 </div>`;
                     });
                 }
                 html += `</div>`;
                 area.innerHTML = html;
             }
         })
-        .catch(() => { 
+        .catch((err) => { 
+            console.error(err);
             area.innerHTML = "<div style='color:red; text-align:center;'>❌ Gagal memuat data.</div>"; 
         })
         .finally(() => { 
@@ -1033,6 +1074,7 @@ document.getElementById('areaHasilAdmin').innerHTML = '';
 </script>
 </body>
 </html>
+
 
 
 
