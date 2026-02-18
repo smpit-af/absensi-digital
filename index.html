@@ -608,9 +608,9 @@ playError();
 const now = new Date();
 const hour = now.getHours();
 
-if (hour < 23) {
+if (hour < 7) {
     // Jika scan dilakukan sebelum jam 07:00
-    bicara("Maaf, waktu absensi dibuka pukul 07:00.");
+    bicara("Maaf, waktu absensi dibuka pukul 07:00 pagi.");
 } else if (hour >= 0) {
     // Jika scan dilakukan setelah jam 13:00
     bicara("Maaf, batas waktu absensi hari ini telah berakhir.");
@@ -968,5 +968,6 @@ document.getElementById('areaHasilAdmin').innerHTML = '';
 </script>
 </body>
 </html>
+
 
 
