@@ -610,21 +610,26 @@ const hour = now.getHours();
 const day = now.getDay();
 
 // A. PRIORITAS PESAN DARI SERVER (DATABASE)
-if (data.msg && data.msg.includes("SUDAH LENGKAP")) {
+// Pindahkan pengecekan hari libur/tutup ke paling atas agar tidak kalah oleh jam
+if (data.msg && (data.msg.includes("LIBUR") || data.msg.includes("SISTEM TUTUP"))) {
+    if (day === 0) {
+        bicara("Maaf, hari ini hari Minggu. Sistem absensi dinonaktifkan.");
+    } else {
+        bicara("Maaf, hari ini adalah hari libur sekolah.");
+    }
+}
+else if (data.msg && data.msg.includes("SUDAH LENGKAP")) {
     bicara(`Maaf ${sapaan}${namaPanggilan}, absensi Anda sudah lengkap untuk hari ini.`);
 } 
-else if (data.msg && data.msg.includes("detik")) {
+else if (data.msg && (data.msg.includes("SABAR") || data.msg.includes("detik"))) {
     const sisaDetik = data.msg.match(/\d+/);
     bicara(`Mohon tunggu ${sisaDetik ? sisaDetik[0] : ''} detik lagi sebelum scan kembali.`);
 }
 else if (data.msg && (data.msg.includes("Tidak ada jadwal") || data.msg.includes("DITOLAK"))) {
     bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak dapat absen karena tidak memiliki jadwal mengajar hari ini.`);
 }
-else if (data.msg && data.msg.includes("LIBUR")) {
-    bicara("Maaf, hari ini adalah hari libur sekolah.");
-}
 
-// B. CEK LOGIKA WAKTU (LOKAL) - Hanya bunyi jika tidak ada pesan spesifik di atas
+// B. CEK LOGIKA WAKTU (LOKAL) - Hanya bunyi jika server tidak mengirim pesan di atas
 else if (day === 0) {
     bicara("Maaf, hari ini hari Minggu. Sistem absensi dinonaktifkan.");
 }
@@ -982,6 +987,7 @@ document.getElementById('areaHasilAdmin').innerHTML = '';
 </script>
 </body>
 </html>
+
 
 
 
