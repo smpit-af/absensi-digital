@@ -666,47 +666,60 @@
                             showStatus(htmlContent, "success", true);
 
                         } else {
-// --- 4. LOGIKA SUARA DITOLAK (FIXED) ---
+// --- 4. LOGIKA SUARA DITOLAK (FIXED & PRIORITIZED) ---
 playError();
 
 const msgUpper = data.msg ? data.msg.toUpperCase() : "";
-const hour = new Date().getHours();
+const now = new Date();
+const hour = now.getHours();
+const minute = now.getMinutes();
 
-// A. PRIORITAS PESAN DARI SERVER
+// 1. PRIORITAS UTAMA: Deteksi Waktu Sebelum Jam 07:00
+// Ini harus di paling atas agar tidak tertabrak kata "DITOLAK" dari server
+if (hour < 7) {
+    bicara(`Maaf, absensi baru dibuka pukul 07:00 pagi. Sekarang masih jam ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}.`);
+} 
 
-// 1. Deteksi spesifik jika pesan mengandung "Status Anda sudah I atau S"
-if (msgUpper.includes("STATUS ANDA SUDAH I") || msgUpper.includes("IZIN")) {
-    bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata izin hari ini.`);
-}
-else if (msgUpper.includes("STATUS ANDA SUDAH S") || msgUpper.includes("SAKIT")) {
-    bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata sakit. Semoga lekas sembuh.`);
-}
-// 2. Deteksi Hari Libur / Minggu
+// 2. Deteksi Hari Minggu
 else if (msgUpper.includes("MINGGU")) {
     bicara("Maaf, hari ini hari Minggu. Sistem absensi dinonaktifkan.");
 }
+
+// 3. Deteksi Hari Libur
 else if (msgUpper.includes("LIBUR")) {
     bicara("Maaf, hari ini adalah hari libur sekolah.");
 }
-// 3. Deteksi Double Scan
+
+// 4. Deteksi Status Izin / Sakit
+else if (msgUpper.includes("STATUS ANDA SUDAH I") || msgUpper.includes("IZIN")) {
+    bicara(`Maaf ${sapaan} ${namaPanggilan}, Anda tidak bisa absen karena sudah terdata izin hari ini.`);
+}
+else if (msgUpper.includes("STATUS ANDA SUDAH S") || msgUpper.includes("SAKIT")) {
+    bicara(`Maaf ${sapaan} ${namaPanggilan}, Anda tidak bisa absen karena sudah terdata sakit. Semoga lekas sembuh.`);
+}
+
+// 5. Deteksi Double Scan / Lengkap
 else if (msgUpper.includes("SUDAH LENGKAP")) {
-    bicara(`Maaf ${sapaan}${namaPanggilan}, absensi Anda sudah lengkap untuk hari ini.`);
+    bicara(`Maaf ${sapaan} ${namaPanggilan}, absensi Anda sudah lengkap untuk hari ini.`);
 } 
+
+// 6. Deteksi Sabar (Jeda Scan)
 else if (msgUpper.includes("SABAR")) {
     const sisaDetik = data.msg.match(/\d+/);
-    bicara(`Mohon tunggu ${sisaDetik ? sisaDetik[0] : ''} detik lagi.`);
+    bicara(`Mohon sabar, tunggu ${sisaDetik ? sisaDetik[0] : ''} detik lagi.`);
 }
-// 4. Deteksi Jadwal (Hanya jika tidak mengandung huruf I atau S di atas)
+
+// 7. Deteksi Tidak Ada Jadwal (Hanya jika jam sudah lewat dari 07:00)
 else if (msgUpper.includes("JADWAL") || msgUpper.includes("DITOLAK")) {
-    bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak dapat absen karena tidak memiliki jadwal atau tugas tambahan hari ini.`);
+    bicara(`Maaf ${sapaan} ${namaPanggilan}, Anda tidak dapat absen karena tidak memiliki jadwal atau tugas tambahan hari ini.`);
 }
-// B. CEK LOGIKA WAKTU LOKAL (CADANGAN)
-else if (hour < 16) {
-    bicara("Maaf, waktu absensi dibuka pukul 07:00 pagi.");
-} 
-else if (hour >= 18) {
+
+// 8. Batas Waktu Akhir
+else if (hour >= 13) {
     bicara("Maaf, batas waktu absensi hari ini telah berakhir.");
 } 
+
+// 9. Pesan Standar jika tidak ada yang cocok
 else {
     bicara("Maaf, permintaan absen ditolak.");
 }
@@ -1096,6 +1109,7 @@ document.getElementById('areaHasilAdmin').innerHTML = '';
 </script>
 </body>
 </html>
+
 
 
 
