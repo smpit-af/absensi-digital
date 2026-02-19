@@ -931,25 +931,39 @@ function exportLaporan() {
         if (confirm("Keluar dari mode Admin?")) closeModal('modalIzin');
     }
 
-    function simpanIzin() {
+function simpanIzin() {
         const id = document.getElementById('idGuruIzin').value;
         const status = document.getElementById('statusIzin').value;
         const ket = document.getElementById('ketIzin').value;
         const btn = document.getElementById('btnSimpanIzin');
-        if (!id || !ket) { alert("Lengkapi data!"); return; }
+
+        // Validasi input kosong tetap di HTML agar tidak membuang kuota fetch
+        if (!id || !ket) { 
+            alert("Lengkapi data!"); 
+            return; 
+        }
+
         btn.disabled = true;
         btn.innerText = "Mengirim...";
+
+        // Mengirim data ke server. Server (Code.gs) yang akan memutuskan 
+        // apakah jamnya sesuai atau tidak.
         fetch(`${scriptURL}?action=tambahIzin&id=${id}&status=${status}&ket=${encodeURIComponent(ket)}`)
             .then(res => res.text())
             .then(data => {
+                // Jika server mengirim pesan dengan simbol ❌ atau ⚠️ 
+                // (artinya ditolak karena waktu, jadwal, atau sudah absen)
                 if (data.includes("⚠️") || data.includes("❌")) {
                     playError();
-                    alert(data);
+                    alert(data); 
                 } else {
-                    alert("Data berhasil disimpan!");
+                    // Jika benar-benar sukses (Data masuk ke Sheets)
+                    alert(data); 
                     document.getElementById('idGuruIzin').value = '';
                     document.getElementById('ketIzin').value = '';
                     document.getElementById('idGuruIzin').focus();
+                    
+                    // Refresh angka rekap di dashboard
                     fetch(`${scriptURL}?action=getRingkasan`)
                         .then(res => res.json())
                         .then(dataRingkasan => {
@@ -960,8 +974,14 @@ function exportLaporan() {
                         });
                 }
             })
-            .catch(() => { playError(); alert("Gagal mengirim data!"); })
-            .finally(() => { btn.disabled = false; btn.innerText = "Simpan Izin"; });
+            .catch(() => { 
+                playError(); 
+                alert("Gagal mengirim data! Periksa koneksi."); 
+            })
+            .finally(() => { 
+                btn.disabled = false; 
+                btn.innerText = "Simpan Izin"; 
+            });
     }
 
     function simpanLibur() {
@@ -1057,6 +1077,7 @@ function exportLaporan() {
 </script>
 </body>
 </html>
+
 
 
 
