@@ -649,10 +649,21 @@ let namaPanggilan = data.nama ? data.nama.split(',')[0] : "";
                             else if (data.foto && data.foto.includes("/d/")) fileId = data.foto.split("/d/")[1].split("/")[0];
                             let fotoUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400` : "https://via.placeholder.com/100?text=FOTO";
 
-                            let notifTerlambat = "";
-                            if (data.terlambat && data.menit > 0) {
-                                notifTerlambat = `<div class="animate__animated animate__shakeX" style="color: #ff3300; font-weight: 900; margin-top: 8px; background: white; border-radius: 8px; padding: 5px; font-size: 13px; border: 2px solid #ff3300;">⚠️ TERLAMBAT</div>`;
-                            }
+let notifTerlambat = "";
+if (data.terlambat && data.menit > 0) {
+    // Logika perhitungan waktu
+    let teksWaktu = "";
+    if (data.menit < 60) {
+        teksWaktu = data.menit + " MENIT";
+    } else {
+        let jam = Math.floor(data.menit / 60);
+        let sisaMenit = data.menit % 60;
+        teksWaktu = jam + " JAM " + (sisaMenit > 0 ? sisaMenit + " MENIT" : "");
+    }
+
+    // Tampilan tetap sama, hanya teks ditambahkan variabel teksWaktu
+    notifTerlambat = `<div class="animate__animated animate__shakeX" style="color: #ff3300; font-weight: 900; margin-top: 8px; background: white; border-radius: 8px; padding: 5px; font-size: 13px; border: 2px solid #ff3300;">⚠️ TERLAMBAT ${teksWaktu}</div>`;
+}
 
                             let htmlContent = `
                                 <img src="${fotoUrl}" class="profile-img" onerror="this.src='https://via.placeholder.com/100?text=FOTO'">
@@ -975,6 +986,7 @@ showStatus("⚠️ " + (data.msg || "Gagal"), "error");
 </script>
 </body>
 </html>
+
 
 
 
