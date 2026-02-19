@@ -625,7 +625,7 @@
                         const data = res.content;
 
                         // --- 1. LOGIKA IDENTITAS & SAPAAN ---
-let namaPanggilan = data.nama ? data.nama : "";
+let namaPanggilan = data.nama ? data.nama.split(',')[0] : "";
                         let sapaan = "";
                         if (data.gender === "L") {
                             sapaan = "Bapak ";
@@ -975,6 +975,7 @@ showStatus("⚠️ " + (data.msg || "Gagal"), "error");
 </script>
 </body>
 </html>
+
 
 
 
