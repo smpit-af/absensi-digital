@@ -932,57 +932,60 @@ function exportLaporan() {
     }
 
 function simpanIzin() {
-        const id = document.getElementById('idGuruIzin').value;
-        const status = document.getElementById('statusIzin').value;
-        const ket = document.getElementById('ketIzin').value;
-        const btn = document.getElementById('btnSimpanIzin');
+    const id = document.getElementById('idGuruIzin').value;
+    const status = document.getElementById('statusIzin').value;
+    const ket = document.getElementById('ketIzin').value;
+    const btn = document.getElementById('btnSimpanIzin');
 
-        // Validasi input kosong tetap di HTML agar tidak membuang kuota fetch
-        if (!id || !ket) { 
-            alert("Lengkapi data!"); 
-            return; 
-        }
-
-        btn.disabled = true;
-        btn.innerText = "Mengirim...";
-
-        // Mengirim data ke server. Server (Code.gs) yang akan memutuskan 
-        // apakah jamnya sesuai atau tidak.
-        fetch(`${scriptURL}?action=tambahIzin&id=${id}&status=${status}&ket=${encodeURIComponent(ket)}`)
-            .then(res => res.text())
-            .then(data => {
-                // Jika server mengirim pesan dengan simbol ❌ atau ⚠️ 
-                // (artinya ditolak karena waktu, jadwal, atau sudah absen)
-                if (data.includes("⚠️") || data.includes("❌")) {
-                    playError();
-                    alert(data); 
-                } else {
-                    // Jika benar-benar sukses (Data masuk ke Sheets)
-                    alert(data); 
-                    document.getElementById('idGuruIzin').value = '';
-                    document.getElementById('ketIzin').value = '';
-                    document.getElementById('idGuruIzin').focus();
-                    
-                    // Refresh angka rekap di dashboard
-                    fetch(`${scriptURL}?action=getRingkasan`)
-                        .then(res => res.json())
-                        .then(dataRingkasan => {
-                            animateValue("rekapHadir", parseInt(document.getElementById('rekapHadir').innerText), dataRingkasan.hadir, 800);
-                            animateValue("rekapIzin", parseInt(document.getElementById('rekapIzin').innerText), dataRingkasan.izin, 800);
-                            animateValue("rekapSakit", parseInt(document.getElementById('rekapSakit').innerText), dataRingkasan.sakit, 800);
-                            animateValue("rekapAlpha", parseInt(document.getElementById('rekapAlpha').innerText), dataRingkasan.alpha, 800);
-                        });
-                }
-            })
-            .catch(() => { 
-                playError(); 
-                alert("Gagal mengirim data! Periksa koneksi."); 
-            })
-            .finally(() => { 
-                btn.disabled = false; 
-                btn.innerText = "Simpan Izin"; 
-            });
+    // 1. Validasi input kosong di sisi client
+    if (!id || !ket) { 
+        alert("Lengkapi data!"); 
+        return; 
     }
+
+    btn.disabled = true;
+    btn.innerText = "Mengirim...";
+
+    // 2. Kirim permintaan ke Code.gs
+    // Server yang akan memvalidasi waktu, hari libur, dan jadwal
+    fetch(`${scriptURL}?action=tambahIzin&id=${id}&status=${status}&ket=${encodeURIComponent(ket)}`)
+        .then(res => res.text()) // Menerima respon sebagai teks bersih
+        .then(data => {
+            // Cek jika respon mengandung tanda gagal/peringatan dari server
+            if (data.includes("⚠️") || data.includes("❌") || data.includes("DITOLAK")) {
+                playError(); // Bunyikan alarm jika gagal
+                alert(data); // Menampilkan pesan: "❌ DITOLAK: Batas waktu..."
+            } else {
+                // Jika sukses
+                alert(data); // Menampilkan pesan: "✅ BERHASIL: Status Izin..."
+                
+                // Reset form input
+                document.getElementById('idGuruIzin').value = '';
+                document.getElementById('ketIzin').value = '';
+                document.getElementById('idGuruIzin').focus();
+                
+                // 3. Refresh angka rekap di dashboard secara otomatis
+                fetch(`${scriptURL}?action=getRingkasan`)
+                    .then(res => res.json())
+                    .then(dataRingkasan => {
+                        animateValue("rekapHadir", parseInt(document.getElementById('rekapHadir').innerText), dataRingkasan.hadir, 800);
+                        animateValue("rekapIzin", parseInt(document.getElementById('rekapIzin').innerText), dataRingkasan.izin, 800);
+                        animateValue("rekapSakit", parseInt(document.getElementById('rekapSakit').innerText), dataRingkasan.sakit, 800);
+                        animateValue("rekapAlpha", parseInt(document.getElementById('rekapAlpha').innerText), dataRingkasan.alpha, 800);
+                    });
+            }
+        })
+        .catch((error) => { 
+            playError(); 
+            console.error(error);
+            alert("Gagal mengirim data! Periksa koneksi internet."); 
+        })
+        .finally(() => { 
+            // Kembalikan status tombol
+            btn.disabled = false; 
+            btn.innerText = "Simpan Izin"; 
+        });
+}
 
     function simpanLibur() {
         const tgl = document.getElementById('tglLibur').value;
@@ -1077,6 +1080,7 @@ function simpanIzin() {
 </script>
 </body>
 </html>
+
 
 
 
