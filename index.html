@@ -473,7 +473,7 @@
     <div id="overlay"></div>
 
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbweMvJCrFZo3FJkN2jHK2Orft0ZsEyrB2fgHon2O7WsZmD4Udb13J_Sb49J0odLO1sbsA/exec';
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbys_86X3oGjtljh9z_JY1GvzrV93-j3Wg6XqRzwOkSA-TqlfhIBzfp7MDFUUH_hMJWtYw/exec';
     let currentFacingMode = "environment";
     let isProcessing = false;
     const html5QrCode = new Html5Qrcode("reader");
@@ -829,31 +829,91 @@ showStatus("⚠️ " + (data.msg || "Gagal"), "error");
             .finally(() => { btn.disabled = false; });
     }
 
-    function exportLaporan() {
-        const btn = document.getElementById('btnExport');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Menyiapkan...";
-        btn.disabled = true;
-        fetch(`${scriptURL}?action=getLaporan`)
-            .then(res => res.json())
-            .then(res => {
-                if (res.status === "success") {
-                    let tableHtml = `<table border="1" style="border-collapse:collapse; width:100%; font-family:sans-serif; font-size:12px;">`;
-                    res.data.forEach((row, idx) => {
-                        tableHtml += `<tr style="${idx === 0 ? 'background:#eee; font-weight:bold;' : ''}">`;
-                        row.forEach(cell => { tableHtml += `<td style="padding:5px;">${cell}</td>`; });
-                        tableHtml += `</tr>`;
-                    });
-                    tableHtml += `</table>`;
-                    const win = window.open("", "_blank");
-                    win.document.write(`<html><head><title>Laporan Absensi ${res.bln}</title><style>body{padding:20px; font-family:sans-serif;} table{width:100%; border-collapse:collapse;} td,th{padding:8px; border:1px solid #000;}</style></head><body><h3>Laporan Absensi SMP IT Al Fathonah - Bulan ${res.bln}</h3>${tableHtml}</body></html>`);
-                    win.document.close();
-                    win.print();
-                }
-            })
-            .catch(() => alert("Gagal mengambil data laporan!"))
-            .finally(() => { btn.innerHTML = originalText; btn.disabled = false; });
-    }
+function exportLaporan() {
+    const btn = document.getElementById('btnExport');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Menyiapkan Laporan...";
+    btn.disabled = true;
+
+    fetch(`${scriptURL}?action=getLaporan`)
+        .then(res => res.json())
+        .then(res => {
+            if (res.status === "success") {
+                let tableHtml = `
+                <html>
+                <head>
+                    <title>LAPORAN_ABSENSI_${res.bln.toUpperCase()}</title>
+                    <style>
+                        @page { 
+                            size: 330mm 215mm; /* Ukuran F4 */
+                            margin: 10mm; 
+                            /* Paksa Landscape */
+                            @bottom-right { content: counter(page); }
+                        }
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            font-size: 10pt; 
+                            background: white; 
+                            color: black; 
+                        }
+                        h3 { text-align: center; text-transform: uppercase; margin-bottom: 20px; }
+                        table { 
+                            width: 100%; 
+                            border-collapse: collapse; 
+                            table-layout: auto;
+                        }
+                        th, td { 
+                            border: 1px solid black; 
+                            padding: 4px 6px; 
+                            text-align: center;
+                            word-wrap: break-word;
+                        }
+                        th { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact; }
+                        tr:nth-child(even) { background-color: #fafafa; }
+                        
+                        /* Penyesuaian lebar kolom agar mirip Sheets */
+                        td:nth-child(7) { text-align: left; min-width: 150px; } /* Nama */
+                        td:nth-child(8) { text-align: left; } /* Jabatan */
+                        
+                        @media print {
+                            body { -webkit-print-color-adjust: exact; }
+                            .no-print { display: none; }
+                        }
+                    </style>
+                </head>
+                <body onload="window.print()">
+                    <h3>LAPORAN ABSENSI DIGITAL SMP IT AL FATHONAH<br>BULAN: ${res.bln} ${new Date().getFullYear()}</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                ${res.data[0].map(header => `<th>${header}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${res.data.slice(1).map(row => `
+                                <tr>
+                                    ${row.map(cell => `<td>${cell || '-'}</td>`).join('')}
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </body>
+                </html>`;
+
+                const win = window.open("", "_blank");
+                win.document.write(tableHtml);
+                win.document.close();
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Gagal mengambil data laporan!");
+        })
+        .finally(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+}
 
     function prosesLogin() {
         const u = document.getElementById('userAdmin').value;
@@ -1019,3 +1079,4 @@ showStatus("⚠️ " + (data.msg || "Gagal"), "error");
 </script>
 </body>
 </html>
+
