@@ -664,46 +664,44 @@
                             showStatus(htmlContent, "success", true);
 
                         } else {
-                            // --- 4. LOGIKA SUARA DITOLAK (REVISI PRIORITAS) ---
+// --- 4. LOGIKA SUARA DITOLAK (FULL SINKRON DENGAN GAS) ---
                             playError();
 
                             const msgUpper = data.msg ? data.msg.toUpperCase() : "";
-                            const now = new Date();
-                            const hour = now.getHours();
 
-                            // A. PRIORITAS 1: CEK WAKTU LOKAL (TANPA SAPAAN)
-                            if (hour < 7) {
+                            // SEKARANG KITA HANYA CEK ISI PESAN DARI GAS
+                            if (msgUpper.includes("BUKA PUKUL 07:00")) {
                                 bicara("Maaf, absensi baru dibuka pukul 07:00 pagi.");
                             } 
-                            else if (hour >= 13) {
+                            else if (msgUpper.includes("SUDAH BERAKHIR") || msgUpper.includes("BATAS WAKTU")) {
                                 bicara("Maaf, batas waktu absensi hari ini telah berakhir.");
                             }
-                            // B. PRIORITAS 2: CEK PESAN SERVER
                             else if (msgUpper.includes("MINGGU")) {
                                 bicara("Maaf, hari ini hari Minggu. Sistem absensi dinonaktifkan.");
                             }
                             else if (msgUpper.includes("LIBUR")) {
                                 bicara("Maaf, hari ini adalah hari libur sekolah.");
                             }
-                            else if (msgUpper.includes("STATUS ANDA SUDAH I") || msgUpper.includes("IZIN")) {
+                            else if (msgUpper.includes("IZIN")) {
                                 bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata izin.`);
                             }
-                            else if (msgUpper.includes("STATUS ANDA SUDAH S") || msgUpper.includes("SAKIT")) {
+                            else if (msgUpper.includes("SAKIT")) {
                                 bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata sakit.`);
                             }
-                            else if (msgUpper.includes("SUDAH LENGKAP")) {
+                            else if (msgUpper.includes("LENGKAP")) {
                                 bicara(`Maaf ${sapaan}${namaPanggilan}, absensi Anda sudah lengkap untuk hari ini.`);
                             } 
                             else if (msgUpper.includes("SABAR")) {
                                 const sisaDetik = data.msg.match(/\d+/);
                                 bicara(`Mohon sabar, tunggu ${sisaDetik ? sisaDetik[0] : ''} detik lagi.`);
                             }
-                            // C. PRIORITAS 3: JADWAL (Hanya dibaca jika jam sudah benar)
                             else if (msgUpper.includes("JADWAL") || msgUpper.includes("DITOLAK")) {
-                                bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak dapat absen karena tidak memiliki jadwal atau tugas tambahan hari ini.`);
+                                // Jika pesan mengandung 'JADWAL', baru kita pakai sapaan nama
+                                bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak memiliki jadwal atau tugas tambahan hari ini.`);
                             }
                             else {
-                                bicara("Maaf, permintaan absen ditolak.");
+                                // Jika tidak ada kata kunci di atas, bacakan pesan asli dari GAS
+                                bicara(data.msg || "Maaf, permintaan absen ditolak.");
                             }
 
                             showStatus("⚠️ " + (data.msg || "Gagal"), "error");
@@ -978,4 +976,5 @@
 </script>
 </body>
 </html>
+
 
