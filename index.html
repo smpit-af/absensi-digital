@@ -624,15 +624,13 @@
                     if (res.type === 'json') {
                         const data = res.content;
 
-                        // --- 1. LOGIKA IDENTITAS & SAPAAN (REVISI) ---
-                        let namaPanggilan = data.nama ? data.nama.split(' ')[0].split(',')[0] : "Bapak atau Ibu";
+                        // --- 1. LOGIKA IDENTITAS & SAPAAN ---
+                        let namaPanggilan = data.nama ? data.nama.split(' ')[0].split(',')[0] : "";
                         let sapaan = "";
                         if (data.gender === "L") {
                             sapaan = "Bapak ";
                         } else if (data.gender === "P") {
                             sapaan = "Ibu ";
-                        } else {
-                            sapaan = "";
                         }
 
                         if (data.status === "success") {
@@ -672,13 +670,15 @@
                             const msgUpper = data.msg ? data.msg.toUpperCase() : "";
                             const now = new Date();
                             const hour = now.getHours();
-                            const minute = now.getMinutes();
 
-                            // A. CEK WAKTU LOKAL (Prioritas 1)
+                            // A. PRIORITAS 1: CEK WAKTU LOKAL (TANPA SAPAAN)
                             if (hour < 7) {
-                                bicara(`Maaf, absensi baru dibuka pukul 07:00 pagi. Sekarang masih jam ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}.`);
+                                bicara("Maaf, absensi baru dibuka pukul 07:00 pagi.");
                             } 
-                            // B. CEK PESAN SERVER (Prioritas 2)
+                            else if (hour >= 13) {
+                                bicara("Maaf, batas waktu absensi hari ini telah berakhir.");
+                            }
+                            // B. PRIORITAS 2: CEK PESAN SERVER
                             else if (msgUpper.includes("MINGGU")) {
                                 bicara("Maaf, hari ini hari Minggu. Sistem absensi dinonaktifkan.");
                             }
@@ -698,12 +698,10 @@
                                 const sisaDetik = data.msg.match(/\d+/);
                                 bicara(`Mohon sabar, tunggu ${sisaDetik ? sisaDetik[0] : ''} detik lagi.`);
                             }
+                            // C. PRIORITAS 3: JADWAL (Hanya dibaca jika jam sudah benar)
                             else if (msgUpper.includes("JADWAL") || msgUpper.includes("DITOLAK")) {
                                 bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak dapat absen karena tidak memiliki jadwal atau tugas tambahan hari ini.`);
                             }
-                            else if (hour >= 13) {
-                                bicara("Maaf, batas waktu absensi hari ini telah berakhir.");
-                            } 
                             else {
                                 bicara("Maaf, permintaan absen ditolak.");
                             }
@@ -980,3 +978,4 @@
 </script>
 </body>
 </html>
+
