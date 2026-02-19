@@ -450,7 +450,7 @@
     <audio id="soundError" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
     <div id="overlay"></div>
 
-    <script>
+<script>
     const scriptURL = 'https://script.google.com/macros/s/AKfycbweMvJCrFZo3FJkN2jHK2Orft0ZsEyrB2fgHon2O7WsZmD4Udb13J_Sb49J0odLO1sbsA/exec';
     let currentFacingMode = "environment";
     let isProcessing = false;
@@ -624,15 +624,15 @@
                     if (res.type === 'json') {
                         const data = res.content;
 
-                        // --- 1. LOGIKA IDENTITAS & SAPAAN ---
-                        let namaPanggilan = data.nama ? data.nama.split(',')[0] : "Bapak atau Ibu";
+                        // --- 1. LOGIKA IDENTITAS & SAPAAN (REVISI) ---
+                        let namaPanggilan = data.nama ? data.nama.split(' ')[0].split(',')[0] : "Bapak atau Ibu";
                         let sapaan = "";
                         if (data.gender === "L") {
                             sapaan = "Bapak ";
                         } else if (data.gender === "P") {
                             sapaan = "Ibu ";
                         } else {
-                            sapaan = "Bapak atau Ibu ";
+                            sapaan = "";
                         }
 
                         if (data.status === "success") {
@@ -666,65 +666,49 @@
                             showStatus(htmlContent, "success", true);
 
                         } else {
-// --- 4. LOGIKA SUARA DITOLAK (FIXED & PRIORITIZED) ---
-playError();
+                            // --- 4. LOGIKA SUARA DITOLAK (REVISI PRIORITAS) ---
+                            playError();
 
-const msgUpper = data.msg ? data.msg.toUpperCase() : "";
-const now = new Date();
-const hour = now.getHours();
-const minute = now.getMinutes();
+                            const msgUpper = data.msg ? data.msg.toUpperCase() : "";
+                            const now = new Date();
+                            const hour = now.getHours();
+                            const minute = now.getMinutes();
 
-// 1. PRIORITAS UTAMA: Deteksi Waktu Sebelum Jam 07:00
-// Ini harus di paling atas agar tidak tertabrak kata "DITOLAK" dari server
-if (hour < 7) {
-    bicara(`Maaf, absensi baru dibuka pukul 07:00 pagi. Sekarang masih jam ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}.`);
-} 
+                            // A. CEK WAKTU LOKAL (Prioritas 1)
+                            if (hour < 7) {
+                                bicara(`Maaf, absensi baru dibuka pukul 07:00 pagi. Sekarang masih jam ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}.`);
+                            } 
+                            // B. CEK PESAN SERVER (Prioritas 2)
+                            else if (msgUpper.includes("MINGGU")) {
+                                bicara("Maaf, hari ini hari Minggu. Sistem absensi dinonaktifkan.");
+                            }
+                            else if (msgUpper.includes("LIBUR")) {
+                                bicara("Maaf, hari ini adalah hari libur sekolah.");
+                            }
+                            else if (msgUpper.includes("STATUS ANDA SUDAH I") || msgUpper.includes("IZIN")) {
+                                bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata izin.`);
+                            }
+                            else if (msgUpper.includes("STATUS ANDA SUDAH S") || msgUpper.includes("SAKIT")) {
+                                bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata sakit.`);
+                            }
+                            else if (msgUpper.includes("SUDAH LENGKAP")) {
+                                bicara(`Maaf ${sapaan}${namaPanggilan}, absensi Anda sudah lengkap untuk hari ini.`);
+                            } 
+                            else if (msgUpper.includes("SABAR")) {
+                                const sisaDetik = data.msg.match(/\d+/);
+                                bicara(`Mohon sabar, tunggu ${sisaDetik ? sisaDetik[0] : ''} detik lagi.`);
+                            }
+                            else if (msgUpper.includes("JADWAL") || msgUpper.includes("DITOLAK")) {
+                                bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak dapat absen karena tidak memiliki jadwal atau tugas tambahan hari ini.`);
+                            }
+                            else if (hour >= 13) {
+                                bicara("Maaf, batas waktu absensi hari ini telah berakhir.");
+                            } 
+                            else {
+                                bicara("Maaf, permintaan absen ditolak.");
+                            }
 
-// 2. Deteksi Hari Minggu
-else if (msgUpper.includes("MINGGU")) {
-    bicara("Maaf, hari ini hari Minggu. Sistem absensi dinonaktifkan.");
-}
-
-// 3. Deteksi Hari Libur
-else if (msgUpper.includes("LIBUR")) {
-    bicara("Maaf, hari ini adalah hari libur sekolah.");
-}
-
-// 4. Deteksi Status Izin / Sakit
-else if (msgUpper.includes("STATUS ANDA SUDAH I") || msgUpper.includes("IZIN")) {
-    bicara(`Maaf ${sapaan} ${namaPanggilan}, Anda tidak bisa absen karena sudah terdata izin hari ini.`);
-}
-else if (msgUpper.includes("STATUS ANDA SUDAH S") || msgUpper.includes("SAKIT")) {
-    bicara(`Maaf ${sapaan} ${namaPanggilan}, Anda tidak bisa absen karena sudah terdata sakit. Semoga lekas sembuh.`);
-}
-
-// 5. Deteksi Double Scan / Lengkap
-else if (msgUpper.includes("SUDAH LENGKAP")) {
-    bicara(`Maaf ${sapaan} ${namaPanggilan}, absensi Anda sudah lengkap untuk hari ini.`);
-} 
-
-// 6. Deteksi Sabar (Jeda Scan)
-else if (msgUpper.includes("SABAR")) {
-    const sisaDetik = data.msg.match(/\d+/);
-    bicara(`Mohon sabar, tunggu ${sisaDetik ? sisaDetik[0] : ''} detik lagi.`);
-}
-
-// 7. Deteksi Tidak Ada Jadwal (Hanya jika jam sudah lewat dari 07:00)
-else if (msgUpper.includes("JADWAL") || msgUpper.includes("DITOLAK")) {
-    bicara(`Maaf ${sapaan} ${namaPanggilan}, Anda tidak dapat absen karena tidak memiliki jadwal atau tugas tambahan hari ini.`);
-}
-
-// 8. Batas Waktu Akhir
-else if (hour >= 13) {
-    bicara("Maaf, batas waktu absensi hari ini telah berakhir.");
-} 
-
-// 9. Pesan Standar jika tidak ada yang cocok
-else {
-    bicara("Maaf, permintaan absen ditolak.");
-}
-
-showStatus("⚠️ " + (data.msg || "Gagal"), "error");
+                            showStatus("⚠️ " + (data.msg || "Gagal"), "error");
                         }
                     } else {
                         playError();
@@ -756,115 +740,72 @@ showStatus("⚠️ " + (data.msg || "Gagal"), "error");
         o.style.display = 'block';
     }
 
-// --- FITUR MONITOR & LAPORAN ADMIN ---
-/* --- PERBAIKAN MONITOR ADMIN (JAVASCRIPT) --- */
-function formatWaktu(val) {
-    // 1. Jika data kosong atau tanda strip
-    if (!val || val === "" || val === "-" || val === "00:00:00") return "";
-    
-    // 2. Jika data sudah berupa string jam (contoh: "07:30:00" atau "07:30")
-    // Kita langsung ambil HH:mm agar tidak diproses sebagai Date yang rumit
-    if (typeof val === 'string' && val.includes(':')) {
-        let parts = val.split(':');
-        return parts[0].padStart(2, '0') + ":" + parts[1].padStart(2, '0');
+    // --- FITUR MONITOR & LAPORAN ADMIN ---
+    function formatWaktu(val) {
+        if (!val || val === "" || val === "-" || val === "00:00:00") return "";
+        if (typeof val === 'string' && val.includes(':')) {
+            let parts = val.split(':');
+            return parts[0].padStart(2, '0') + ":" + parts[1].padStart(2, '0');
+        }
+        try {
+            let d = new Date(val);
+            if (isNaN(d.getTime())) return "";
+            if (d.getFullYear() < 2000 && d.getFullYear() > 0) return ""; 
+            let jam = d.getHours().toString().padStart(2, '0');
+            let menit = d.getMinutes().toString().padStart(2, '0');
+            return `${jam}:${menit}`;
+        } catch (e) { return ""; }
     }
 
-    // 3. Jika data berupa objek Date (dari Apps Script)
-    try {
-        let d = new Date(val);
-        if (isNaN(d.getTime())) return "";
-        
-        // Tetap filter tahun 1899 agar tidak muncul angka aneh
-        if (d.getFullYear() < 2000 && d.getFullYear() > 0) return ""; 
-
-        let jam = d.getHours().toString().padStart(2, '0');
-        let menit = d.getMinutes().toString().padStart(2, '0');
-        return `${jam}:${menit}`;
-    } catch (e) { 
-        return ""; 
-    }
-}
-
-function monitorKehadiran() {
-    const area = document.getElementById('areaHasilAdmin');
-    const btn = document.getElementById('btnMonitor');
-    
-    if (area.style.display === "block" && area.innerHTML !== "") {
-        area.style.display = "none";
-        area.innerHTML = "";
-        return;
-    }
-
-    area.style.display = "block";
-    area.innerHTML = "<div style='text-align:center; padding:10px; color:#333;'><i class='fas fa-spinner fa-spin'></i> Memuat data live...</div>";
-    btn.disabled = true;
-
-    fetch(`${scriptURL}?action=getMonitor`)
-        .then(res => res.json())
-        .then(res => {
-            if (res.status === "success") {
-                let html = "";
-                
-                // --- BAGIAN 1: BELUM ABSEN (DIKEMBALIKAN) ---
-                if (res.belum && res.belum.length > 0) {
-                    html += `<strong><i class="fas fa-user-times"></i> Belum Absen (${res.belum.length}):</strong>`;
-                    res.belum.forEach((g, idx) => {
-                        html += `
-                        <div class="baris-guru" style="color:#ef4444;">
-                            <div class="info-guru">
-                                <span class="nama-teks">${idx + 1}. ${g.nama}</span>
-                                <span class="id-teks">ID: ${g.id}</span>
-                            </div>
-                            <span class="jam-log">- | -</span>
-                        </div>`;
-                    });
+    function monitorKehadiran() {
+        const area = document.getElementById('areaHasilAdmin');
+        const btn = document.getElementById('btnMonitor');
+        if (area.style.display === "block" && area.innerHTML !== "") {
+            area.style.display = "none";
+            area.innerHTML = "";
+            return;
+        }
+        area.style.display = "block";
+        area.innerHTML = "<div style='text-align:center; padding:10px; color:#333;'><i class='fas fa-spinner fa-spin'></i> Memuat data live...</div>";
+        btn.disabled = true;
+        fetch(`${scriptURL}?action=getMonitor`)
+            .then(res => res.json())
+            .then(res => {
+                if (res.status === "success") {
+                    let html = "";
+                    if (res.belum && res.belum.length > 0) {
+                        html += `<strong><i class="fas fa-user-times"></i> Belum Absen (${res.belum.length}):</strong>`;
+                        res.belum.forEach((g, idx) => {
+                            html += `<div class="baris-guru" style="color:#ef4444;"><div class="info-guru"><span class="nama-teks">${idx + 1}. ${g.nama}</span><span class="id-teks">ID: ${g.id}</span></div><span class="jam-log">- | -</span></div>`;
+                        });
+                    }
+                    if (res.sudah && res.sudah.length > 0) {
+                        html += `<strong><i class="fas fa-user-check"></i> Sudah Terdata (${res.sudah.length}):</strong>`;
+                        res.sudah.forEach((g, idx) => {
+                            let warnaStatus = "#333"; 
+                            if (g.status === "H") warnaStatus = "#10b981";
+                            else if (g.status === "I") warnaStatus = "#2196f3";
+                            else if (g.status === "S") warnaStatus = "#f59e0b";
+                            else if (g.status === "A") warnaStatus = "#ef4444";
+                            else if (g.status === "-") warnaStatus = "#a855f7";
+                            let jamM = formatWaktu(g.jamMasuk);
+                            let jamP = formatWaktu(g.jamPulang);
+                            let jamTampil = (g.status === "-" || g.status === "A" || g.status === "I" || g.status === "S") ? "-" : `${jamM || "--:--"} | ${jamP || "--:--"}`;
+                            html += `<div class="baris-guru" style="color:${warnaStatus};"><div class="info-guru"><span class="nama-teks">${idx + 1}. ${g.nama}</span><span class="id-teks">ID: ${g.id}</span></div><span class="jam-log">${jamTampil}</span></div>`;
+                        });
+                    }
+                    area.innerHTML = html || "<div style='text-align:center; padding:10px;'>Data tidak ditemukan.</div>";
                 }
-                
-                // --- BAGIAN 2: SUDAH TERDATA ---
-                if (res.sudah && res.sudah.length > 0) {
-                    html += `<strong><i class="fas fa-user-check"></i> Sudah Terdata (${res.sudah.length}):</strong>`;
-                    res.sudah.forEach((g, idx) => {
-                        let warnaStatus = "#333"; 
-                        if (g.status === "H") warnaStatus = "#10b981";
-                        else if (g.status === "I") warnaStatus = "#2196f3";
-                        else if (g.status === "S") warnaStatus = "#f59e0b";
-                        else if (g.status === "A") warnaStatus = "#ef4444";
-                        else if (g.status === "-") warnaStatus = "#a855f7";
+            })
+            .catch(err => { area.innerHTML = "❌ Gagal memuat."; })
+            .finally(() => { btn.disabled = false; });
+    }
 
-                        let jamM = formatWaktu(g.jamMasuk);
-                        let jamP = formatWaktu(g.jamPulang);
-                        
-                        let jamTampil = "";
-                        if (g.status === "-" || g.status === "A" || g.status === "I" || g.status === "S") {
-                            jamTampil = "-";
-                        } else {
-                            let m = jamM ? jamM : "--:--";
-                            let p = jamP ? jamP : "--:--";
-                            jamTampil = `${m} | ${p}`;
-                        }
-
-                        html += `
-                        <div class="baris-guru" style="color:${warnaStatus};">
-                            <div class="info-guru">
-                                <span class="nama-teks">${idx + 1}. ${g.nama}</span>
-                                <span class="id-teks">ID: ${g.id}</span>
-                            </div>
-                            <span class="jam-log">${jamTampil}</span>
-                        </div>`;
-                    });
-                }
-                area.innerHTML = html || "<div style='text-align:center; padding:10px;'>Data tidak ditemukan.</div>";
-            }
-        })
-        .catch(err => { area.innerHTML = "❌ Gagal memuat."; })
-        .finally(() => { btn.disabled = false; });
-}
     function exportLaporan() {
         const btn = document.getElementById('btnExport');
         const originalText = btn.innerHTML;
         btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Menyiapkan...";
         btn.disabled = true;
-
         fetch(`${scriptURL}?action=getLaporan`)
             .then(res => res.json())
             .then(res => {
@@ -876,137 +817,92 @@ function monitorKehadiran() {
                         tableHtml += `</tr>`;
                     });
                     tableHtml += `</table>`;
-
                     const win = window.open("", "_blank");
-                    win.document.write(`<html><head><title>Laporan Absensi ${res.bln}</title>`);
-                    win.document.write(`<style>body{padding:20px; font-family:sans-serif;} table{width:100%; border-collapse:collapse;} td,th{padding:8px; border:1px solid #000;}</style>`);
-                    win.document.write(`</head><body>`);
-                    win.document.write(`<h3>Laporan Absensi SMP IT Al Fathonah - Bulan ${res.bln}</h3>`);
-                    win.document.write(tableHtml);
-                    win.document.write(`</body></html>`);
+                    win.document.write(`<html><head><title>Laporan Absensi ${res.bln}</title><style>body{padding:20px; font-family:sans-serif;} table{width:100%; border-collapse:collapse;} td,th{padding:8px; border:1px solid #000;}</style></head><body><h3>Laporan Absensi SMP IT Al Fathonah - Bulan ${res.bln}</h3>${tableHtml}</body></html>`);
                     win.document.close();
                     win.print();
                 }
             })
             .catch(() => alert("Gagal mengambil data laporan!"))
-            .finally(() => {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            });
-    }
-        
-    // --- PROSES ADMIN ---
-function prosesLogin() {
-    const u = document.getElementById('userAdmin').value;
-    const p = document.getElementById('passAdmin').value;
-    const btn = document.getElementById('btnLogin');
-
-    if (!u || !p) {
-        alert("Isi username dan password!");
-        return;
+            .finally(() => { btn.innerHTML = originalText; btn.disabled = false; });
     }
 
-    btn.innerText = "Memverifikasi...";
-    btn.disabled = true;
-
-    // Mengirim permintaan login ke server (Code.gs)
-    fetch(`${scriptURL}?action=loginAdmin&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === "success") {
-                // Jika login berhasil, baru ambil data ringkasan
-                btn.innerText = "Memuat Panel...";
-                fetch(`${scriptURL}?action=getRingkasan`)
-                    .then(res => res.json())
-                    .then(dataRingkasan => {
-                        closeModal('modalLogin');
-                        openModal('modalIzin');
-                        animateValue("rekapHadir", 0, dataRingkasan.hadir, 1200);
-                        animateValue("rekapIzin", 0, dataRingkasan.izin, 1200);
-                        animateValue("rekapSakit", 0, dataRingkasan.sakit, 1200);
-                        animateValue("rekapAlpha", 0, dataRingkasan.alpha, 1200);
-                    });
-            } else {
-                playError();
-                alert("Username atau Password Salah!");
-                btn.innerText = "Login";
-                btn.disabled = false;
-            }
-        })
-        .catch(() => {
-            playError();
-            alert("Gagal terhubung ke server!");
-            btn.innerText = "Login";
-            btn.disabled = false;
-        });
-}
+    function prosesLogin() {
+        const u = document.getElementById('userAdmin').value;
+        const p = document.getElementById('passAdmin').value;
+        const btn = document.getElementById('btnLogin');
+        if (!u || !p) { alert("Isi username dan password!"); return; }
+        btn.innerText = "Memverifikasi...";
+        btn.disabled = true;
+        fetch(`${scriptURL}?action=loginAdmin&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "success") {
+                    btn.innerText = "Memuat Panel...";
+                    fetch(`${scriptURL}?action=getRingkasan`)
+                        .then(res => res.json())
+                        .then(dataRingkasan => {
+                            closeModal('modalLogin');
+                            openModal('modalIzin');
+                            animateValue("rekapHadir", 0, dataRingkasan.hadir, 1200);
+                            animateValue("rekapIzin", 0, dataRingkasan.izin, 1200);
+                            animateValue("rekapSakit", 0, dataRingkasan.sakit, 1200);
+                            animateValue("rekapAlpha", 0, dataRingkasan.alpha, 1200);
+                        });
+                } else {
+                    playError();
+                    alert("Username atau Password Salah!");
+                    btn.innerText = "Login";
+                    btn.disabled = false;
+                }
+            })
+            .catch(() => { playError(); alert("Gagal terhubung ke server!"); btn.innerText = "Login"; btn.disabled = false; });
+    }
 
     function prosesLogout() {
         document.getElementById('areaHasilAdmin').style.display = 'none';
-document.getElementById('areaHasilAdmin').innerHTML = '';
+        document.getElementById('areaHasilAdmin').innerHTML = '';
         if (confirm("Keluar dari mode Admin?")) closeModal('modalIzin');
     }
 
-   function simpanIzin() {
-    const id = document.getElementById('idGuruIzin').value;
-    const status = document.getElementById('statusIzin').value;
-    const ket = document.getElementById('ketIzin').value;
-    const btn = document.getElementById('btnSimpanIzin');
-
-    if (!id || !ket) {
-        alert("Lengkapi data!");
-        return;
+    function simpanIzin() {
+        const id = document.getElementById('idGuruIzin').value;
+        const status = document.getElementById('statusIzin').value;
+        const ket = document.getElementById('ketIzin').value;
+        const btn = document.getElementById('btnSimpanIzin');
+        if (!id || !ket) { alert("Lengkapi data!"); return; }
+        btn.disabled = true;
+        btn.innerText = "Mengirim...";
+        fetch(`${scriptURL}?action=tambahIzin&id=${id}&status=${status}&ket=${encodeURIComponent(ket)}`)
+            .then(res => res.text())
+            .then(data => {
+                if (data.includes("⚠️") || data.includes("❌")) {
+                    playError();
+                    alert(data);
+                } else {
+                    alert("Data berhasil disimpan!");
+                    document.getElementById('idGuruIzin').value = '';
+                    document.getElementById('ketIzin').value = '';
+                    document.getElementById('idGuruIzin').focus();
+                    fetch(`${scriptURL}?action=getRingkasan`)
+                        .then(res => res.json())
+                        .then(dataRingkasan => {
+                            animateValue("rekapHadir", parseInt(document.getElementById('rekapHadir').innerText), dataRingkasan.hadir, 800);
+                            animateValue("rekapIzin", parseInt(document.getElementById('rekapIzin').innerText), dataRingkasan.izin, 800);
+                            animateValue("rekapSakit", parseInt(document.getElementById('rekapSakit').innerText), dataRingkasan.sakit, 800);
+                            animateValue("rekapAlpha", parseInt(document.getElementById('rekapAlpha').innerText), dataRingkasan.alpha, 800);
+                        });
+                }
+            })
+            .catch(() => { playError(); alert("Gagal mengirim data!"); })
+            .finally(() => { btn.disabled = false; btn.innerText = "Simpan Izin"; });
     }
-
-    btn.disabled = true;
-    btn.innerText = "Mengirim...";
-
-    fetch(`${scriptURL}?action=tambahIzin&id=${id}&status=${status}&ket=${encodeURIComponent(ket)}`)
-        .then(res => res.text())
-        .then(data => {
-            if (data.includes("⚠️") || data.includes("❌")) {
-                playError();
-                alert(data);
-            } else {
-                // Notifikasi sukses kecil (opsional, bisa pakai alert atau toast)
-                alert("Data berhasil disimpan!");
-                
-                // --- PERBAIKAN UX ---
-                // 1. Kosongkan inputan agar siap isi guru berikutnya
-                document.getElementById('idGuruIzin').value = '';
-                document.getElementById('ketIzin').value = '';
-                document.getElementById('idGuruIzin').focus(); // Fokuskan kembali ke input ID
-
-                // 2. Update angka dashboard (Rekap) secara otomatis
-                // Agar admin melihat angka di atas langsung berubah
-                fetch(`${scriptURL}?action=getRingkasan`)
-                    .then(res => res.json())
-                    .then(dataRingkasan => {
-                        animateValue("rekapHadir", parseInt(document.getElementById('rekapHadir').innerText), dataRingkasan.hadir, 800);
-                        animateValue("rekapIzin", parseInt(document.getElementById('rekapIzin').innerText), dataRingkasan.izin, 800);
-                        animateValue("rekapSakit", parseInt(document.getElementById('rekapSakit').innerText), dataRingkasan.sakit, 800);
-                        animateValue("rekapAlpha", parseInt(document.getElementById('rekapAlpha').innerText), dataRingkasan.alpha, 800);
-                    });
-            }
-        })
-        .catch(() => {
-            playError();
-            alert("Gagal mengirim data!");
-        })
-        .finally(() => {
-            btn.disabled = false;
-            btn.innerText = "Simpan Izin";
-        });
-}
 
     function simpanLibur() {
         const tgl = document.getElementById('tglLibur').value;
         const ket = document.getElementById('ketLibur').value;
         const btn = document.getElementById('btnSimpanLibur');
-        if (!tgl || !ket) {
-            alert("Pilih tanggal dan isi keterangan!");
-            return;
-        }
+        if (!tgl || !ket) { alert("Pilih tanggal dan isi keterangan!"); return; }
         btn.disabled = true;
         btn.innerText = "Menyimpan...";
         fetch(`${scriptURL}?action=tambahLibur&tanggal=${tgl}&ket=${encodeURIComponent(ket)}`)
@@ -1017,10 +913,7 @@ document.getElementById('areaHasilAdmin').innerHTML = '';
                 document.getElementById('ketLibur').value = '';
             })
             .catch(() => alert("Gagal menyimpan hari libur!"))
-            .finally(() => {
-                btn.disabled = false;
-                btn.innerText = "Tambah Hari Libur";
-            });
+            .finally(() => { btn.disabled = false; btn.innerText = "Tambah Hari Libur"; });
     }
 
     function prosesCekStatus() {
@@ -1031,18 +924,9 @@ document.getElementById('areaHasilAdmin').innerHTML = '';
         btn.innerText = "Mengecek...";
         fetch(`${scriptURL}?action=cekStatus&id=${encodeURIComponent(id)}`)
             .then(res => res.text())
-            .then(data => {
-                alert(data);
-                closeModal('modalCek');
-            })
-            .catch(() => {
-                playError();
-                alert("Gagal koneksi!");
-            })
-            .finally(() => {
-                btn.disabled = false;
-                btn.innerText = "Lihat Status";
-            });
+            .then(data => { alert(data); closeModal('modalCek'); })
+            .catch(() => { playError(); alert("Gagal koneksi!"); })
+            .finally(() => { btn.disabled = false; btn.innerText = "Lihat Status"; });
     }
 
     function bukaDaftarID() {
@@ -1050,7 +934,6 @@ document.getElementById('areaHasilAdmin').innerHTML = '';
         openModal('modalDaftarID');
         const container = document.getElementById('listGuruContainer');
         container.innerHTML = '<div style="padding: 20px; text-align: center;"><i class="fas fa-spinner fa-spin"></i> Mengambil data...</div>';
-
         fetch(`${scriptURL}?action=getDaftarGuru`)
             .then(res => res.json())
             .then(data => {
@@ -1058,20 +941,13 @@ document.getElementById('areaHasilAdmin').innerHTML = '';
                     let html = '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
                     html += '<tr style="background: #f4f4f4; position: sticky; top: 0;"><th style="padding: 10px; text-align:left; border-bottom: 2px solid #ddd;">Nama</th><th style="padding: 10px; text-align:center; border-bottom: 2px solid #ddd;">ID</th></tr>';
                     data.data.forEach(g => {
-                        html += `<tr class="item-guru">
-                                    <td style="padding: 10px; border-bottom: 1px solid #eee;">${g.nama}</td>
-                                    <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; color: #2b59bc; text-align:center;">${g.id}</td>
-                                 </tr>`;
+                        html += `<tr class="item-guru"><td style="padding: 10px; border-bottom: 1px solid #eee;">${g.nama}</td><td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; color: #2b59bc; text-align:center;">${g.id}</td></tr>`;
                     });
                     html += '</table>';
                     container.innerHTML = html;
-                } else {
-                    container.innerHTML = '<div style="padding: 20px; color: red; text-align:center;">Gagal memuat data.</div>';
-                }
+                } else { container.innerHTML = '<div style="padding: 20px; color: red; text-align:center;">Gagal memuat data.</div>'; }
             })
-            .catch(() => {
-                container.innerHTML = '<div style="padding: 20px; color: red; text-align:center;">Koneksi bermasalah.</div>';
-            });
+            .catch(() => { container.innerHTML = '<div style="padding: 20px; color: red; text-align:center;">Koneksi bermasalah.</div>'; });
     }
 
     function filterDaftarGuru() {
@@ -1083,9 +959,7 @@ document.getElementById('areaHasilAdmin').innerHTML = '';
         });
     }
 
-    function bukaPrint() {
-        window.open(scriptURL + "?page=print", "_blank");
-    }
+    function bukaPrint() { window.open(scriptURL + "?page=print", "_blank"); }
 
     function bukaJadwal() {
         const btn = document.querySelector('.btn-jadwal');
@@ -1099,24 +973,10 @@ document.getElementById('areaHasilAdmin').innerHTML = '';
                 else alert("Link jadwal belum diatur di Spreadsheet (Sel G2)!");
             })
             .catch(() => alert("Gagal mengambil link jadwal"))
-            .finally(() => {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            });
+            .finally(() => { btn.innerHTML = originalText; btn.disabled = false; });
     }
 
     window.onload = startScanner;
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
