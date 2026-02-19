@@ -832,82 +832,60 @@ showStatus("⚠️ " + (data.msg || "Gagal"), "error");
 function exportLaporan() {
     const btn = document.getElementById('btnExport');
     const originalText = btn.innerHTML;
-    btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Menyiapkan Laporan...";
+    btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Menyiapkan...";
     btn.disabled = true;
 
     fetch(`${scriptURL}?action=getLaporan`)
         .then(res => res.json())
         .then(res => {
             if (res.status === "success") {
-                let tableHtml = `
+                const win = window.open("", "_blank");
+                
+                // Membuat konten HTML
+                let htmlContent = `
                 <html>
                 <head>
-                    <title>LAPORAN_ABSENSI_${res.bln.toUpperCase()}</title>
+                    <title>Laporan_Absensi</title>
+                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
                     <style>
-                        @page { 
-                            size: 330mm 215mm; /* Ukuran F4 */
-                            margin: 10mm; 
-                            /* Paksa Landscape */
-                            @bottom-right { content: counter(page); }
-                        }
-                        body { 
-                            font-family: Arial, sans-serif; 
-                            font-size: 10pt; 
-                            background: white; 
-                            color: black; 
-                        }
-                        h3 { text-align: center; text-transform: uppercase; margin-bottom: 20px; }
-                        table { 
-                            width: 100%; 
-                            border-collapse: collapse; 
-                            table-layout: auto;
-                        }
-                        th, td { 
-                            border: 1px solid black; 
-                            padding: 4px 6px; 
-                            text-align: center;
-                            word-wrap: break-word;
-                        }
-                        th { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact; }
-                        tr:nth-child(even) { background-color: #fafafa; }
+                        @page { size: 330mm 215mm; margin: 10mm; }
+                        body { font-family: Arial, sans-serif; font-size: 10pt; padding: 20px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                        th, td { border: 1px solid black; padding: 5px; text-align: center; }
+                        th { background: #f2f2f2; }
                         
-                        /* Penyesuaian lebar kolom agar mirip Sheets */
-                        td:nth-child(7) { text-align: left; min-width: 150px; } /* Nama */
-                        td:nth-child(8) { text-align: left; } /* Jabatan */
-                        
-                        @media print {
-                            body { -webkit-print-color-adjust: exact; }
-                            .no-print { display: none; }
+                        /* Tombol Bantuan untuk HP */
+                        .floating-print {
+                            position: fixed; bottom: 20px; right: 20px;
+                            background: #2b59bc; color: white; border: none;
+                            padding: 15px 25px; border-radius: 50px;
+                            font-size: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+                            cursor: pointer; z-index: 1000;
                         }
+                        @media print { .floating-print { display: none; } }
                     </style>
                 </head>
-                <body onload="window.print()">
-                    <h3>LAPORAN ABSENSI DIGITAL SMP IT AL FATHONAH<br>BULAN: ${res.bln} ${new Date().getFullYear()}</h3>
+                <body>
+                    <button class="floating-print" onclick="window.print()">
+                        <i class="fas fa-print"></i> CETAK SEKARANG
+                    </button>
+                    
+                    <h3 style="text-align:center;">LAPORAN ABSENSI DIGITAL<br>BULAN: ${res.bln}</h3>
                     <table>
-                        <thead>
-                            <tr>
-                                ${res.data[0].map(header => `<th>${header}</th>`).join('')}
-                            </tr>
-                        </thead>
+                        <thead><tr>${res.data[0].map(h => `<th>${h}</th>`).join('')}</tr></thead>
                         <tbody>
-                            ${res.data.slice(1).map(row => `
-                                <tr>
-                                    ${row.map(cell => `<td>${cell || '-'}</td>`).join('')}
-                                </tr>
-                            `).join('')}
+                            ${res.data.slice(1).map(row => `<tr>${row.map(c => `<td>${c || '-'}</td>`).join('')}</tr>`).join('')}
                         </tbody>
                     </table>
                 </body>
                 </html>`;
 
-                const win = window.open("", "_blank");
-                win.document.write(tableHtml);
+                win.document.write(htmlContent);
                 win.document.close();
+                
+                // Trigger otomatis untuk Laptop, untuk HP ada tombol cadangan di atas
+                setTimeout(() => { win.print(); }, 1000);
             }
-        })
-        .catch(err => {
-            console.error(err);
-            alert("Gagal mengambil data laporan!");
         })
         .finally(() => {
             btn.innerHTML = originalText;
@@ -1079,4 +1057,5 @@ function exportLaporan() {
 </script>
 </body>
 </html>
+
 
