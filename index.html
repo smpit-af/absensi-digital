@@ -278,6 +278,17 @@
             margin: 0 auto 15px; display: block; background: #eee;
         }
 
+        @keyframes loading {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+#preloader.fade-out {
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+}
+
         .success { background: var(--success); color: white; }
         .error { background: var(--danger); color: white; }
         .loading { background: white; color: #333; }
@@ -305,6 +316,17 @@
 </head>
 
 <body>
+    <div id="preloader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+    <div class="animate__animated animate__pulse animate__infinite">
+        <i class="fas fa-qrcode" style="font-size: 60px; color: var(--primary);"></i>
+    </div>
+    <div style="margin-top: 20px; font-weight: bold; color: var(--primary); font-family: sans-serif;">
+        MENYIAPKAN SISTEM...
+    </div>
+    <div class="loader-bar" style="width: 150px; height: 4px; background: #eee; margin-top: 10px; border-radius: 10px; overflow: hidden;">
+        <div style="width: 100%; height: 100%; background: var(--primary); animation: loading 1.5s infinite ease-in-out;"></div>
+    </div>
+</div>
     <div id="conn-status"></div>
 
     <div class="container">
@@ -982,14 +1004,18 @@ showStatus("⚠️ " + (data.msg || "Gagal"), "error");
             .finally(() => { btn.innerHTML = originalText; btn.disabled = false; });
     }
 
+    window.addEventListener('load', function() {
+    const preloader = document.getElementById('preloader');
+    // Beri jeda sedikit agar transisi terasa halus
+    setTimeout(() => {
+        preloader.classList.add('fade-out');
+        setTimeout(() => {
+            preloader.style.display = 'none';
+        }, 500);
+    }, 1500); 
+});
+
     window.onload = startScanner;
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
