@@ -664,44 +664,46 @@
                             showStatus(htmlContent, "success", true);
 
                         } else {
-                            // --- 4. LOGIKA SUARA DITOLAK (REVISI SINKRON GAS) ---
-                            playError();
-                            const msgUpper = data.msg ? data.msg.toUpperCase() : "";
+// --- 4. LOGIKA SUARA DITOLAK (REVISI SINKRON GAS & ALPHA) ---
+playError();
+const msgUpper = data.msg ? data.msg.toUpperCase() : "";
 
-                            if (msgUpper.includes("MINGGU")) {
-                                bicara("Maaf, hari ini hari Minggu. Sistem absensi dinonaktifkan.");
-                            } 
-                            else if (msgUpper.includes("LIBUR")) {
-                                bicara("Maaf, hari ini adalah hari libur sekolah.");
-                            }
-                            else if (msgUpper.includes("07:00")) {
-                                bicara("Maaf, absensi baru dibuka pukul 07:00 pagi.");
-                            } 
-                            else if (msgUpper.includes("SUDAH BERAKHIR") || msgUpper.includes("BATAS WAKTU")) {
-                                bicara("Maaf, batas waktu absensi hari ini telah berakhir.");
-                            }
-                            // Cek IZIN/SAKIT didahulukan daripada JADWAL/DITOLAK
-                            else if (msgUpper.includes("SUDAH I") || msgUpper.includes("IZIN")) {
-                                bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata izin.`);
-                            }
-                            else if (msgUpper.includes("SUDAH S") || msgUpper.includes("SAKIT")) {
-                                bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata sakit.`);
-                            }
-                            else if (msgUpper.includes("LENGKAP")) {
-                                bicara(`Maaf ${sapaan}${namaPanggilan}, absensi Anda sudah lengkap untuk hari ini.`);
-                            } 
-                            else if (msgUpper.includes("SABAR")) {
-                                const sisaDetik = data.msg.match(/\d+/);
-                                bicara(`Mohon sabar, tunggu ${sisaDetik ? sisaDetik[0] : ''} detik lagi.`);
-                            }
-                            else if (msgUpper.includes("JADWAL") || msgUpper.includes("DITOLAK")) {
-                                bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak memiliki jadwal atau tugas tambahan hari ini.`);
-                            }
-                            else {
-                                bicara(data.msg || "Maaf, permintaan absen ditolak.");
-                            }
+if (msgUpper.includes("MINGGU")) {
+    bicara("Maaf, hari ini hari Minggu. Sistem absensi dinonaktifkan.");
+} 
+else if (msgUpper.includes("LIBUR")) {
+    bicara("Maaf, hari ini adalah hari libur sekolah.");
+}
+else if (msgUpper.includes("07:00")) {
+    bicara("Maaf, absensi baru dibuka pukul 07:00 pagi.");
+} 
+else if (msgUpper.includes("SUDAH BERAKHIR") || msgUpper.includes("BATAS WAKTU")) {
+    bicara("Maaf, batas waktu absensi hari ini telah berakhir.");
+}
+else if (msgUpper.includes("SUDAH I") || msgUpper.includes("IZIN")) {
+    bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata izin.`);
+}
+else if (msgUpper.includes("SUDAH S") || msgUpper.includes("SAKIT")) {
+    bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata sakit.`);
+}
+else if (msgUpper.includes("ALPHA") || msgUpper.includes("ALPA")) {
+    bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata alpha.`);
+}
+else if (msgUpper.includes("LENGKAP")) {
+    bicara(`Maaf ${sapaan}${namaPanggilan}, absensi Anda sudah lengkap untuk hari ini.`);
+} 
+else if (msgUpper.includes("SABAR")) {
+    const sisaDetik = data.msg.match(/\d+/);
+    bicara(`Mohon sabar, tunggu ${sisaDetik ? sisaDetik[0] : ''} detik lagi.`);
+}
+else if (msgUpper.includes("JADWAL") || msgUpper.includes("DITOLAK")) {
+    bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak memiliki jadwal atau tugas tambahan hari ini.`);
+}
+else {
+    bicara(data.msg || "Maaf, permintaan absen ditolak.");
+}
 
-                            showStatus("⚠️ " + (data.msg || "Gagal"), "error");
+showStatus("⚠️ " + (data.msg || "Gagal"), "error");
                         }
                     } else {
                         playError();
@@ -973,6 +975,7 @@
 </script>
 </body>
 </html>
+
 
 
 
