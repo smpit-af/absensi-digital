@@ -9,6 +9,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="E-Absensi">
+
+    <link rel="manifest" href="manifest.json">
     
     <script src="https://unpkg.com/html5-qrcode"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -1082,10 +1084,23 @@ function simpanIzin() {
     }, 1500); 
 });
 
+    if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('sw.js')
+                .then(function(reg) {
+                    console.log('Service Worker berhasil didaftarkan!', reg.scope);
+                })
+                .catch(function(err) {
+                    console.error('Pendaftaran Service Worker gagal:', err);
+                });
+            });
+        }
+
     window.onload = startScanner;
 </script>
 </body>
 </html>
+
 
 
 
