@@ -764,13 +764,13 @@
                                     const sisaDetik = data.msg.match(/\d+/);
                                     bicara(`Mohon sabar, tunggu ${sisaDetik ? sisaDetik[0] : ''} detik lagi.`);
                                 }
-                                else if (msgUpper.includes("JADWAL") || msgUpper.includes("DITOLAK")) {
-                                    bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak memiliki jadwal atau tugas tambahan hari ini.`);
-                                }
-                                else {
-                                    bicara(data.msg || "Maaf, permintaan absen ditolak.");
-                                }
-
+                            else if (msgUpper.includes("JADWAL")) {
+    bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak memiliki jadwal atau tugas tambahan hari ini.`);
+}
+else if (msgUpper.includes("DITOLAK")) {
+    // Ini adalah cadangan jika ada kata ditolak yang tidak tertangkap logika di atas
+    bicara("Maaf, permintaan absensi Anda ditolak.");
+}
                                 showStatus("⚠️ " + (data.msg || "Gagal"), "error");
                             }
                       } else {
@@ -1196,5 +1196,6 @@ function hitungJarak(lat1, lon1, lat2, lon2) {
 </script>
 </body>
 </html>
+
 
 
