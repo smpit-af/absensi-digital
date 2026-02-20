@@ -439,6 +439,7 @@
 
 <div id="areaHasilAdmin" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-bottom: 15px; max-height: 200px; overflow-y: auto; font-size: 13px;">
 </div>
+
 <div class="divider"><span>INPUT IZIN / SAKIT</span></div>
 <div class="input-group">
     <input type="text" id="idGuruIzin" placeholder="Masukkan ID Guru" onkeyup="cekNamaOtomatis()">
@@ -446,7 +447,20 @@
 </div>
 
 <div class="input-group">
-    <input type="text" id="namaGuruIzin" placeholder="Nama Guru Otomatis..." readonly style="background: #f0f0f0; font-weight: bold; color: var(--primary);">
+    <input type="text" id="namaGuruIzin" placeholder="Nama Guru Otomatis..." readonly style="background: #eee; font-weight: bold; color: var(--primary);">
+    <i class="fas fa-user-check input-icon"></i>
+</div>
+
+<div id="areaHasilAdmin" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-bottom: 15px; max-height: 200px; overflow-y: auto; font-size: 13px;">
+</div>
+<div class="divider"><span>INPUT IZIN / SAKIT</span></div>
+<div class="input-group">
+    <input type="text" id="idGuruIzin" placeholder="Masukkan ID Guru" onkeyup="cekNamaOtomatis()">
+    <i class="fas fa-times-circle input-icon" onclick="clearInput('idGuruIzin'); document.getElementById('namaGuruIzin').value='';"></i>
+</div>
+
+<div class="input-group">
+    <input type="text" id="namaGuruIzin" placeholder="Nama Guru Otomatis..." readonly style="background: #eee; font-weight: bold; color: var(--primary);">
     <i class="fas fa-user-check input-icon"></i>
 </div>
 
@@ -1001,21 +1015,23 @@ function simpanIzin() {
         });
 }
 
-    let timerCek;
+  // --- FUNGSI CARI NAMA OTOMATIS SAAT INPUT IZIN ---
+let timerCek;
 function cekNamaOtomatis() {
     clearTimeout(timerCek);
     const id = document.getElementById('idGuruIzin').value.trim();
     const targetNama = document.getElementById('namaGuruIzin');
     
-    if (id.length < 2) {
+    if (id.length < 1) {
         targetNama.value = "";
         return;
     }
 
-    targetNama.value = "Mencari nama...";
+    targetNama.value = "Mencari...";
+    targetNama.style.color = "orange";
     
-    // Memberi jeda 0.5 detik saat mengetik agar tidak membebani server
     timerCek = setTimeout(() => {
+        // Kita gunakan data yang sudah diambil saat halaman load agar cepat
         fetch(`${scriptURL}?action=getDaftarGuru`)
             .then(res => res.json())
             .then(res => {
@@ -1031,9 +1047,9 @@ function cekNamaOtomatis() {
                 }
             })
             .catch(() => {
-                targetNama.value = "Gagal memverifikasi";
+                targetNama.value = "Koneksi Bermasalah";
             });
-    }, 500);
+    }, 500); // Mencari setelah 0.5 detik berhenti mengetik
 }
 
     function simpanLibur() {
@@ -1141,6 +1157,7 @@ function cekNamaOtomatis() {
 </script>
 </body>
 </html>
+
 
 
 
