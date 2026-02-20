@@ -773,15 +773,24 @@
 
                                 showStatus("⚠️ " + (data.msg || "Gagal"), "error");
                             }
-                        } else {
-                            playError();
-                            const msg = res.content.toUpperCase();
-                            if (msg.includes("MINGGU")) bicara("Maaf, hari Minggu sistem absensi dinonaktifkan.");
-                            else if (msg.includes("LIBUR")) bicara("Maaf, Hari ini adalah hari libur sekolah.");
-                            else if (msg.includes("DITOLAK")) bicara("Maaf, batas waktu absensi sudah berakhir.");
-                            
-                            showStatus(res.content, "error");
-                        }
+                      } else {
+    playError();
+    const msg = res.content.toUpperCase();
+    if (msg.includes("MINGGU")) {
+        bicara("Maaf, hari Minggu sistem absensi dinonaktifkan.");
+    } else if (msg.includes("LIBUR")) {
+        bicara("Maaf, hari ini adalah hari libur sekolah.");
+    } else if (msg.includes("07:00")) { 
+        // CEK JAM 7 DULU SEBELUM CEK KATA "DITOLAK"
+        bicara("Maaf, absensi baru dibuka pukul 07:00 pagi.");
+    } else if (msg.includes("DITOLAK") || msg.includes("BERAKHIR")) {
+        bicara("Maaf, batas waktu absensi hari ini telah berakhir.");
+    } else {
+        bicara(res.content); // Jika ada pesan lain dari server
+    }
+    
+    showStatus(res.content, "error");
+}
                     })
                     .catch((err) => {
                         playError();
@@ -1187,4 +1196,5 @@ function hitungJarak(lat1, lon1, lat2, lon2) {
 </script>
 </body>
 </html>
+
 
