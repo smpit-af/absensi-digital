@@ -1,4 +1,4 @@
-const CACHE_NAME = 'absensi-v1';
+const CACHE_NAME = 'absensi-v4.1.6';
 const assets = [
   '/absensi-digital/index.html',
   '/absensi-digital/manifest.json',
@@ -19,4 +19,5 @@ self.addEventListener('fetch', event => {
       return response || fetch(event.request);
     })
   );
+
 });
