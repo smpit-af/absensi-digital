@@ -487,7 +487,7 @@
     <div id="overlay"></div>
 
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbxGOb00Flwq8ItbqeZLMDV9JXCbMQLiHhOG6NxN0u3Zgq-DlaIAIQjHZ3U4Ed77JMYfbA/exec';
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbzE4E3ctAmu4gp56bepVCLwf2wiyLxKWnzqmLBkh7skYlshbXrESmZf6kqQsFgM6zPAIA/exec';
     let currentFacingMode = "environment";
     let isProcessing = false;
     const html5QrCode = new Html5Qrcode("reader");
@@ -646,8 +646,8 @@
             const userLon = position.coords.longitude;
             
             // --- KONFIGURASI LOKASI SEKOLAH ---
-            const sekolahLat = -6.8992377409251; // <--- GANTI DENGAN LATITUDE SEKOLAH ANDA
-            const sekolahLon = 108.72377795752782; // <--- GANTI DENGAN LONGITUDE SEKOLAH ANDA
+            const sekolahLat = -6.881411942835804; // <--- GANTI DENGAN LATITUDE SEKOLAH ANDA
+            const sekolahLon = 108.72277002958089; // <--- GANTI DENGAN LONGITUDE SEKOLAH ANDA
             const radiusMaksimal = 100; // Toleransi 100 meter
             
             const jarak = hitungJarak(userLat, userLon, sekolahLat, sekolahLon);
@@ -1187,3 +1187,4 @@ function hitungJarak(lat1, lon1, lat2, lon2) {
 </script>
 </body>
 </html>
+
