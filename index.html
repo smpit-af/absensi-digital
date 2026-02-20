@@ -632,147 +632,177 @@
         window.speechSynthesis.getVoices();
     };
 
-    // --- LOGIKA UTAMA SCAN ---
+// --- LOGIKA UTAMA SCAN DENGAN VALIDASI LOKASI ---
     function onScanSuccess(decodedText) {
         const isModalOpen = document.querySelector('.modal-overlay[style*="display: flex"]');
         if (isModalOpen || isProcessing) return;
 
         isProcessing = true;
-        html5QrCode.stop().then(() => {
-            showStatus("⏳ Memproses...", "loading");
-            const finalURL = `${scriptURL}?id=${encodeURIComponent(decodedText)}&t=${new Date().getTime()}`;
+        showStatus("⏳ Mengecek Lokasi...", "loading");
 
-            fetch(finalURL)
-                .then(response => response.text().then(text => {
-                    try {
-                        return {
-                            type: 'json',
-                            content: JSON.parse(text)
-                        };
-                    } catch (e) {
-                        return {
-                            type: 'text',
-                            content: text
-                        };
-                    }
-                }))
-                .then(res => {
-                    if (res.type === 'json') {
-                        const data = res.content;
+        // 1. CEK KOORDINAT GPS HP
+        navigator.geolocation.getCurrentPosition((position) => {
+            const userLat = position.coords.latitude;
+            const userLon = position.coords.longitude;
+            
+            // --- KONFIGURASI LOKASI SEKOLAH ---
+            const sekolahLat = -6.8992377409251; // <--- GANTI DENGAN LATITUDE SEKOLAH ANDA
+            const sekolahLon = 108.72377795752782; // <--- GANTI DENGAN LONGITUDE SEKOLAH ANDA
+            const radiusMaksimal = 100; // Toleransi 100 meter
+            
+            const jarak = hitungJarak(userLat, userLon, sekolahLat, sekolahLon);
 
-                        // --- 1. LOGIKA IDENTITAS & SAPAAN ---
-let namaPanggilan = data.nama ? data.nama.split(',')[0] : "";
-                        let sapaan = "";
-                        if (data.gender === "L") {
-                            sapaan = "Bapak ";
-                        } else if (data.gender === "P") {
-                            sapaan = "Ibu ";
-                        }
-
-                        if (data.status === "success") {
-                            // --- 2. LOGIKA SUARA BERHASIL ---
-                            if (data.msg === "BERHASIL MASUK") {
-                                document.getElementById('soundSuccess').play().catch(e => {});
-                                bicara("Absen masuk berhasil. Selamat bertugas, " + sapaan + namaPanggilan);
-                            } else if (data.msg === "BERHASIL PULANG") {
-                                document.getElementById('soundSuccess').play().catch(e => {});
-                                bicara("Absen pulang berhasil. Hati-hati di jalan " + sapaan + namaPanggilan + ", selamat beristirahat.");
-                            }
-
-                            // --- 3. TAMPILAN FOTO ---
-                            let fileId = "";
-                            if (data.foto && data.foto.includes("id=")) fileId = data.foto.split("id=")[1];
-                            else if (data.foto && data.foto.includes("/d/")) fileId = data.foto.split("/d/")[1].split("/")[0];
-                            let fotoUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400` : "https://via.placeholder.com/100?text=FOTO";
-
-let notifTerlambat = "";
-if (data.terlambat && data.menit > 0) {
-    // Logika perhitungan waktu
-    let teksWaktu = "";
-    if (data.menit < 60) {
-        teksWaktu = data.menit + " MENIT";
-    } else {
-        let jam = Math.floor(data.menit / 60);
-        let sisaMenit = data.menit % 60;
-        teksWaktu = jam + " JAM " + (sisaMenit > 0 ? sisaMenit + " MENIT" : "");
-    }
-
-    // Tampilan tetap sama, hanya teks ditambahkan variabel teksWaktu
-    notifTerlambat = `<div class="animate__animated animate__shakeX" style="color: #ff3300; font-weight: 900; margin-top: 8px; background: white; border-radius: 8px; padding: 5px; font-size: 13px; border: 2px solid #ff3300;">⚠️ TERLAMBAT ${teksWaktu}</div>`;
-}
-
-                            let htmlContent = `
-                                <img src="${fotoUrl}" class="profile-img" onerror="this.src='https://via.placeholder.com/100?text=FOTO'">
-                                <div style="font-size: 14px; margin-bottom: 5px; font-weight: 500;">${data.msg}</div>
-                                <div style="font-size: 18px; font-weight: bold; color: yellow;">${data.nama}</div>
-                                <div style="font-size: 13px; margin-top: 5px; background: rgba(0,0,0,0.2); display: inline-block; padding: 2px 10px; border-radius: 10px;">${data.jabatan}</div>
-                                ${notifTerlambat}
-                            `;
-                            showStatus(htmlContent, "success", true);
-
-                        } else {
-// --- 4. LOGIKA SUARA DITOLAK (REVISI SINKRON GAS & ALPHA) ---
-playError();
-const msgUpper = data.msg ? data.msg.toUpperCase() : "";
-
-if (msgUpper.includes("MINGGU")) {
-    bicara("Maaf, hari ini hari Minggu. Sistem absensi dinonaktifkan.");
-} 
-else if (msgUpper.includes("LIBUR")) {
-    bicara("Maaf, hari ini adalah hari libur sekolah.");
-}
-else if (msgUpper.includes("07:00")) {
-    bicara("Maaf, absensi baru dibuka pukul 07:00 pagi.");
-} 
-else if (msgUpper.includes("SUDAH BERAKHIR") || msgUpper.includes("BATAS WAKTU")) {
-    bicara("Maaf, batas waktu absensi hari ini telah berakhir.");
-}
-else if (msgUpper.includes("SUDAH I") || msgUpper.includes("IZIN")) {
-    bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata izin.`);
-}
-else if (msgUpper.includes("SUDAH S") || msgUpper.includes("SAKIT")) {
-    bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata sakit.`);
-}
-else if (msgUpper.includes("ALPHA") || msgUpper.includes("ALPA")) {
-    bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata alpha.`);
-}
-else if (msgUpper.includes("LENGKAP")) {
-    bicara(`Maaf ${sapaan}${namaPanggilan}, absensi Anda sudah lengkap untuk hari ini.`);
-} 
-else if (msgUpper.includes("SABAR")) {
-    const sisaDetik = data.msg.match(/\d+/);
-    bicara(`Mohon sabar, tunggu ${sisaDetik ? sisaDetik[0] : ''} detik lagi.`);
-}
-else if (msgUpper.includes("JADWAL") || msgUpper.includes("DITOLAK")) {
-    bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak memiliki jadwal atau tugas tambahan hari ini.`);
-}
-else {
-    bicara(data.msg || "Maaf, permintaan absen ditolak.");
-}
-
-showStatus("⚠️ " + (data.msg || "Gagal"), "error");
-                        }
-                  } else {
-    playError();
-    const msg = res.content.toUpperCase();
-    // Pemicu suara untuk pesan teks (Minggu/Libur/Ditolak Jam)
-    if (msg.includes("MINGGU")) bicara("Maaf, hari Minggu sistem absensi dinonaktifkan.");
-    else if (msg.includes("LIBUR")) bicara("Maaf, Hari ini adalah hari libur sekolah.");
-    else if (msg.includes("DITOLAK")) bicara("Maaf, batas waktu absensi sudah berakhir.");
-    
-    showStatus(res.content, "error");
-}
-                })
-                .catch((err) => {
-                    playError();
-                    showStatus("❌ Gagal Terhubung ke Server", "error");
-                })
-                .finally(() => setTimeout(() => {
+            // JIKA DI LUAR JANGKAUAN
+            if (jarak > radiusMaksimal) {
+                playError();
+                showStatus(`❌ DITOLAK: Jarak Anda ${Math.round(jarak)}m dari sekolah.`, "error");
+                bicara("Maaf, Anda berada di luar jangkauan sekolah.");
+                
+                setTimeout(() => {
                     document.getElementById('overlay').style.display = 'none';
                     isProcessing = false;
                     startScanner();
-                }, 4000));
-        });
+                }, 4000);
+                return;
+            }
+
+            // 2. JIKA LOKASI OK, LANJUT KE LOGIKA ASLI ANDA
+            html5QrCode.stop().then(() => {
+                showStatus("⏳ Memproses...", "loading");
+                const finalURL = `${scriptURL}?id=${encodeURIComponent(decodedText)}&t=${new Date().getTime()}`;
+
+                fetch(finalURL)
+                    .then(response => response.text().then(text => {
+                        try {
+                            return { type: 'json', content: JSON.parse(text) };
+                        } catch (e) {
+                            return { type: 'text', content: text };
+                        }
+                    }))
+                    .then(res => {
+                        if (res.type === 'json') {
+                            const data = res.content;
+
+                            // --- 1. LOGIKA IDENTITAS & SAPAAN ---
+                            let namaPanggilan = data.nama ? data.nama.split(',')[0] : "";
+                            let sapaan = "";
+                            if (data.gender === "L") {
+                                sapaan = "Bapak ";
+                            } else if (data.gender === "P") {
+                                sapaan = "Ibu ";
+                            }
+
+                            if (data.status === "success") {
+                                // --- 2. LOGIKA SUARA BERHASIL ---
+                                if (data.msg === "BERHASIL MASUK") {
+                                    document.getElementById('soundSuccess').play().catch(e => {});
+                                    bicara("Absen masuk berhasil. Selamat bertugas, " + sapaan + namaPanggilan);
+                                } else if (data.msg === "BERHASIL PULANG") {
+                                    document.getElementById('soundSuccess').play().catch(e => {});
+                                    bicara("Absen pulang berhasil. Hati-hati di jalan " + sapaan + namaPanggilan + ", selamat beristirahat.");
+                                }
+
+                                // --- 3. TAMPILAN FOTO ---
+                                let fileId = "";
+                                if (data.foto && data.foto.includes("id=")) fileId = data.foto.split("id=")[1];
+                                else if (data.foto && data.foto.includes("/d/")) fileId = data.foto.split("/d/")[1].split("/")[0];
+                                let fotoUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400` : "https://via.placeholder.com/100?text=FOTO";
+
+                                let notifTerlambat = "";
+                                if (data.terlambat && data.menit > 0) {
+                                    // Logika perhitungan waktu
+                                    let teksWaktu = "";
+                                    if (data.menit < 60) {
+                                        teksWaktu = data.menit + " MENIT";
+                                    } else {
+                                        let jam = Math.floor(data.menit / 60);
+                                        let sisaMenit = data.menit % 60;
+                                        teksWaktu = jam + " JAM " + (sisaMenit > 0 ? sisaMenit + " MENIT" : "");
+                                    }
+                                    notifTerlambat = `<div class="animate__animated animate__shakeX" style="color: #ff3300; font-weight: 900; margin-top: 8px; background: white; border-radius: 8px; padding: 5px; font-size: 13px; border: 2px solid #ff3300;">⚠️ TERLAMBAT ${teksWaktu}</div>`;
+                                }
+
+                                let htmlContent = `
+                                    <img src="${fotoUrl}" class="profile-img" onerror="this.src='https://via.placeholder.com/100?text=FOTO'">
+                                    <div style="font-size: 14px; margin-bottom: 5px; font-weight: 500;">${data.msg}</div>
+                                    <div style="font-size: 18px; font-weight: bold; color: yellow;">${data.nama}</div>
+                                    <div style="font-size: 13px; margin-top: 5px; background: rgba(0,0,0,0.2); display: inline-block; padding: 2px 10px; border-radius: 10px;">${data.jabatan}</div>
+                                    ${notifTerlambat}
+                                `;
+                                showStatus(htmlContent, "success", true);
+
+                            } else {
+                                // --- 4. LOGIKA SUARA DITOLAK ---
+                                playError();
+                                const msgUpper = data.msg ? data.msg.toUpperCase() : "";
+
+                                if (msgUpper.includes("MINGGU")) {
+                                    bicara("Maaf, hari ini hari Minggu. Sistem absensi dinonaktifkan.");
+                                } 
+                                else if (msgUpper.includes("LIBUR")) {
+                                    bicara("Maaf, hari ini adalah hari libur sekolah.");
+                                }
+                                else if (msgUpper.includes("07:00")) {
+                                    bicara("Maaf, absensi baru dibuka pukul 07:00 pagi.");
+                                } 
+                                else if (msgUpper.includes("SUDAH BERAKHIR") || msgUpper.includes("BATAS WAKTU")) {
+                                    bicara("Maaf, batas waktu absensi hari ini telah berakhir.");
+                                }
+                                else if (msgUpper.includes("SUDAH I") || msgUpper.includes("IZIN")) {
+                                    bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata izin.`);
+                                }
+                                else if (msgUpper.includes("SUDAH S") || msgUpper.includes("SAKIT")) {
+                                    bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata sakit.`);
+                                }
+                                else if (msgUpper.includes("ALPHA") || msgUpper.includes("ALPA")) {
+                                    bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata alpha.`);
+                                }
+                                else if (msgUpper.includes("LENGKAP")) {
+                                    bicara(`Maaf ${sapaan}${namaPanggilan}, absensi Anda sudah lengkap untuk hari ini.`);
+                                } 
+                                else if (msgUpper.includes("SABAR")) {
+                                    const sisaDetik = data.msg.match(/\d+/);
+                                    bicara(`Mohon sabar, tunggu ${sisaDetik ? sisaDetik[0] : ''} detik lagi.`);
+                                }
+                                else if (msgUpper.includes("JADWAL") || msgUpper.includes("DITOLAK")) {
+                                    bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak memiliki jadwal atau tugas tambahan hari ini.`);
+                                }
+                                else {
+                                    bicara(data.msg || "Maaf, permintaan absen ditolak.");
+                                }
+
+                                showStatus("⚠️ " + (data.msg || "Gagal"), "error");
+                            }
+                        } else {
+                            playError();
+                            const msg = res.content.toUpperCase();
+                            if (msg.includes("MINGGU")) bicara("Maaf, hari Minggu sistem absensi dinonaktifkan.");
+                            else if (msg.includes("LIBUR")) bicara("Maaf, Hari ini adalah hari libur sekolah.");
+                            else if (msg.includes("DITOLAK")) bicara("Maaf, batas waktu absensi sudah berakhir.");
+                            
+                            showStatus(res.content, "error");
+                        }
+                    })
+                    .catch((err) => {
+                        playError();
+                        showStatus("❌ Gagal Terhubung ke Server", "error");
+                    })
+                    .finally(() => setTimeout(() => {
+                        document.getElementById('overlay').style.display = 'none';
+                        isProcessing = false;
+                        startScanner();
+                    }, 4000));
+            });
+
+        }, (err) => {
+            playError();
+            showStatus("❌ GPS MATI / IZIN LOKASI DITOLAK", "error");
+            isProcessing = false;
+            setTimeout(() => { 
+                document.getElementById('overlay').style.display = 'none'; 
+                startScanner(); 
+            }, 3000);
+        }, { enableHighAccuracy: true });
     }
 
     function playError() {
@@ -1141,21 +1171,19 @@ function cekNamaOtomatis() {
             });
         }
 
+    // --- FUNGSI TAMBAHAN: HITUNG JARAK ---
+function hitungJarak(lat1, lon1, lat2, lon2) {
+    const R = 6371000; // Radius bumi dalam meter
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Hasilnya dalam meter
+}
+
     window.onload = startScanner;
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
