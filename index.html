@@ -85,7 +85,7 @@
         .marquee {
             white-space: nowrap;
             display: inline-block;
-            animation: marquee 30s linear infinite; 
+            animation: marquee 32s linear infinite; 
             will-change: transform;
         }
 
@@ -743,7 +743,7 @@ showStatus("⚠️ " + (data.msg || "Gagal"), "error");
     const msg = res.content.toUpperCase();
     // Pemicu suara untuk pesan teks (Minggu/Libur/Ditolak Jam)
     if (msg.includes("MINGGU")) bicara("Maaf, hari Minggu sistem absensi dinonaktifkan.");
-    else if (msg.includes("LIBUR")) bicara("Hari ini adalah hari libur sekolah.");
+    else if (msg.includes("LIBUR")) bicara("Maaf, Hari ini adalah hari libur sekolah.");
     else if (msg.includes("DITOLAK")) bicara("Maaf, batas waktu absensi sudah berakhir.");
     
     showStatus(res.content, "error");
@@ -1086,6 +1086,7 @@ function simpanIzin() {
 </script>
 </body>
 </html>
+
 
 
 
