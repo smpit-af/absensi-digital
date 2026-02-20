@@ -1015,7 +1015,7 @@ function simpanIzin() {
         });
 }
 
-  // --- FUNGSI CARI NAMA OTOMATIS SAAT INPUT IZIN ---
+// --- FUNGSI CARI NAMA OTOMATIS ---
 let timerCek;
 function cekNamaOtomatis() {
     clearTimeout(timerCek);
@@ -1028,10 +1028,8 @@ function cekNamaOtomatis() {
     }
 
     targetNama.value = "Mencari...";
-    targetNama.style.color = "orange";
     
     timerCek = setTimeout(() => {
-        // Kita gunakan data yang sudah diambil saat halaman load agar cepat
         fetch(`${scriptURL}?action=getDaftarGuru`)
             .then(res => res.json())
             .then(res => {
@@ -1046,10 +1044,8 @@ function cekNamaOtomatis() {
                     }
                 }
             })
-            .catch(() => {
-                targetNama.value = "Koneksi Bermasalah";
-            });
-    }, 500); // Mencari setelah 0.5 detik berhenti mengetik
+            .catch(() => { targetNama.value = "Koneksi Error"; });
+    }, 500);
 }
 
     function simpanLibur() {
@@ -1157,6 +1153,7 @@ function cekNamaOtomatis() {
 </script>
 </body>
 </html>
+
 
 
 
