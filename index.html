@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+    <base target="_top"> <meta charset="UTF-8">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>E-Absensi SMP IT Al Fathonah</title>
@@ -26,6 +27,10 @@
         }
 
         * { box-sizing: border-box; }
+
+        body {
+    padding-bottom: 80px; /* Beri ruang di bawah agar tidak tertutup Navbar MainApp */
+}
             
         body {
             margin: 0; padding: 0;
@@ -487,7 +492,7 @@
     <div id="overlay"></div>
 
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbzE4E3ctAmu4gp56bepVCLwf2wiyLxKWnzqmLBkh7skYlshbXrESmZf6kqQsFgM6zPAIA/exec';
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbz-MirhnYbQUL4Umzhx3mfVYboO4eOoeN92PtoCivzaA4y-ZACCJSbA76pbd9QJPg_OSQ/exec';
     let currentFacingMode = "environment";
     let isProcessing = false;
     const html5QrCode = new Html5Qrcode("reader");
@@ -813,6 +818,11 @@ else if (msgUpper.includes("DITOLAK")) {
             }, 3000);
         }, { enableHighAccuracy: true });
     }
+
+    // Jika sukses, beri jeda 2 detik lalu suruh parent (MainApp) pindah ke home
+setTimeout(() => {
+    window.parent.postMessage('goToHome', '*'); 
+}, 2000);
 
     function playError() {
         if (navigator.vibrate) navigator.vibrate([300, 150, 300]);
@@ -1196,6 +1206,7 @@ function hitungJarak(lat1, lon1, lat2, lon2) {
 </script>
 </body>
 </html>
+
 
 
 
