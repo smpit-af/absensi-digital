@@ -637,13 +637,13 @@
         const isModalOpen = document.querySelector('.modal-overlay[style*="display: flex"]');
         if (isModalOpen || isProcessing) return;
 
-        isProcessing = true;
-        showStatus("⏳ Mengecek Lokasi...", "loading");
+        // isProcessing = true;
+        // showStatus("⏳ Mengecek Lokasi...", "loading");
 
-        // 1. CEK KOORDINAT GPS HP
-        navigator.geolocation.getCurrentPosition((position) => {
-            const userLat = position.coords.latitude;
-            const userLon = position.coords.longitude;
+        // // 1. CEK KOORDINAT GPS HP
+        // navigator.geolocation.getCurrentPosition((position) => {
+        //     const userLat = position.coords.latitude;
+        //     const userLon = position.coords.longitude;
             
             // // --- KONFIGURASI LOKASI SEKOLAH ---
             // const sekolahLat = -6.881411942835804; // <--- GANTI DENGAN LATITUDE SEKOLAH ANDA
@@ -1196,6 +1196,7 @@ function hitungJarak(lat1, lon1, lat2, lon2) {
 </script>
 </body>
 </html>
+
 
 
 
