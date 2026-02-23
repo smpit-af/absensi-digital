@@ -632,178 +632,170 @@
         window.speechSynthesis.getVoices();
     };
 
-// --- LOGIKA UTAMA SCAN DENGAN VALIDASI LOKASI ---
+// --- LOGIKA UTAMA SCAN (GEOFENCING DINONAKTIFKAN) ---
     function onScanSuccess(decodedText) {
         const isModalOpen = document.querySelector('.modal-overlay[style*="display: flex"]');
         if (isModalOpen || isProcessing) return;
 
-        // isProcessing = true;
-        // showStatus("⏳ Mengecek Lokasi...", "loading");
+        isProcessing = true;
+        
+        /* // --- FITUR GEOFENCING DIMATIKAN ---
+        showStatus("⏳ Mengecek Lokasi...", "loading");
+        navigator.geolocation.getCurrentPosition((position) => {
+            const userLat = position.coords.latitude;
+            const userLon = position.coords.longitude;
+            const sekolahLat = -6.881411942835804; 
+            const sekolahLon = 108.72277002958089; 
+            const radiusMaksimal = 100; 
+            const jarak = hitungJarak(userLat, userLon, sekolahLat, sekolahLon);
 
-        // // 1. CEK KOORDINAT GPS HP
-        // navigator.geolocation.getCurrentPosition((position) => {
-        //     const userLat = position.coords.latitude;
-        //     const userLon = position.coords.longitude;
-            
-            // // --- KONFIGURASI LOKASI SEKOLAH ---
-            // const sekolahLat = -6.881411942835804; // <--- GANTI DENGAN LATITUDE SEKOLAH ANDA
-            // const sekolahLon = 108.72277002958089; // <--- GANTI DENGAN LONGITUDE SEKOLAH ANDA
-            // const radiusMaksimal = 100; // Toleransi 100 meter
-            
-            // const jarak = hitungJarak(userLat, userLon, sekolahLat, sekolahLon);
+            if (jarak > radiusMaksimal) {
+                playError();
+                showStatus(`❌ DITOLAK: Jarak Anda ${Math.round(jarak)}m dari sekolah.`, "error");
+                bicara("Maaf, Anda berada di luar jangkauan sekolah.");
+                setTimeout(() => {
+                    document.getElementById('overlay').style.display = 'none';
+                    isProcessing = false;
+                    startScanner();
+                }, 4000);
+                return;
+            }
+        */
 
-            // // JIKA DI LUAR JANGKAUAN
-            // if (jarak > radiusMaksimal) {
-            //     playError();
-            //     showStatus(`❌ DITOLAK: Jarak Anda ${Math.round(jarak)}m dari sekolah.`, "error");
-            //     bicara("Maaf, Anda berada di luar jangkauan sekolah.");
-                
-            //     setTimeout(() => {
-            //         document.getElementById('overlay').style.display = 'none';
-            //         isProcessing = false;
-            //         startScanner();
-            //     }, 4000);
-            //     return;
-            // }
+        // LANGSUNG PROSES ABSENSI TANPA CEK LOKASI
+        html5QrCode.stop().then(() => {
+            showStatus("⏳ Memproses...", "loading");
+            const finalURL = `${scriptURL}?id=${encodeURIComponent(decodedText)}&t=${new Date().getTime()}`;
 
-            // // 2. JIKA LOKASI OK, LANJUT KE LOGIKA ASLI ANDA
-            // html5QrCode.stop().then(() => {
-            //     showStatus("⏳ Memproses...", "loading");
-            //     const finalURL = `${scriptURL}?id=${encodeURIComponent(decodedText)}&t=${new Date().getTime()}`;
+            fetch(finalURL)
+                .then(response => response.text().then(text => {
+                    try {
+                        return { type: 'json', content: JSON.parse(text) };
+                    } catch (e) {
+                        return { type: 'text', content: text };
+                    }
+                }))
+                .then(res => {
+                    if (res.type === 'json') {
+                        const data = res.content;
 
-            //     fetch(finalURL)
-            //         .then(response => response.text().then(text => {
-            //             try {
-            //                 return { type: 'json', content: JSON.parse(text) };
-            //             } catch (e) {
-            //                 return { type: 'text', content: text };
-            //             }
-            //         }))
-            //         .then(res => {
-            //             if (res.type === 'json') {
-            //                 const data = res.content;
+                        // --- 1. LOGIKA IDENTITAS & SAPAAN ---
+                        let namaPanggilan = data.nama ? data.nama.split(',')[0] : "";
+                        let sapaan = "";
+                        if (data.gender === "L") {
+                            sapaan = "Bapak ";
+                        } else if (data.gender === "P") {
+                            sapaan = "Ibu ";
+                        }
 
-                            // --- 1. LOGIKA IDENTITAS & SAPAAN ---
-                            let namaPanggilan = data.nama ? data.nama.split(',')[0] : "";
-                            let sapaan = "";
-                            if (data.gender === "L") {
-                                sapaan = "Bapak ";
-                            } else if (data.gender === "P") {
-                                sapaan = "Ibu ";
+                        if (data.status === "success") {
+                            // --- 2. LOGIKA SUARA BERHASIL ---
+                            if (data.msg === "BERHASIL MASUK") {
+                                document.getElementById('soundSuccess').play().catch(e => {});
+                                bicara("Absen masuk berhasil. Selamat bertugas, " + sapaan + namaPanggilan);
+                            } else if (data.msg === "BERHASIL PULANG") {
+                                document.getElementById('soundSuccess').play().catch(e => {});
+                                bicara("Absen pulang berhasil. Hati-hati di jalan " + sapaan + namaPanggilan + ", selamat beristirahat.");
                             }
 
-                            if (data.status === "success") {
-                                // --- 2. LOGIKA SUARA BERHASIL ---
-                                if (data.msg === "BERHASIL MASUK") {
-                                    document.getElementById('soundSuccess').play().catch(e => {});
-                                    bicara("Absen masuk berhasil. Selamat bertugas, " + sapaan + namaPanggilan);
-                                } else if (data.msg === "BERHASIL PULANG") {
-                                    document.getElementById('soundSuccess').play().catch(e => {});
-                                    bicara("Absen pulang berhasil. Hati-hati di jalan " + sapaan + namaPanggilan + ", selamat beristirahat.");
-                                }
+                            // --- 3. TAMPILAN FOTO ---
+                            let fileId = "";
+                            if (data.foto && data.foto.includes("id=")) fileId = data.foto.split("id=")[1];
+                            else if (data.foto && data.foto.includes("/d/")) fileId = data.foto.split("/d/")[1].split("/")[0];
+                            let fotoUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400` : "https://via.placeholder.com/100?text=FOTO";
 
-                                // --- 3. TAMPILAN FOTO ---
-                                let fileId = "";
-                                if (data.foto && data.foto.includes("id=")) fileId = data.foto.split("id=")[1];
-                                else if (data.foto && data.foto.includes("/d/")) fileId = data.foto.split("/d/")[1].split("/")[0];
-                                let fotoUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400` : "https://via.placeholder.com/100?text=FOTO";
+                            let notifTerlambat = "";
+                            if (data.terlambat && data.menit > 0) {
+                                let teksWaktu = "";
+                                if (data.menit < 60) {
+                                    teksWaktu = data.menit + " MENIT";
+                                } else {
+                                    let jam = Math.floor(data.menit / 60);
+                                    let sisaMenit = data.menit % 60;
+                                    teksWaktu = jam + " JAM " + (sisaMenit > 0 ? sisaMenit + " MENIT" : "");
+                                }
+                                notifTerlambat = `<div class="animate__animated animate__shakeX" style="color: #ff3300; font-weight: 900; margin-top: 8px; background: white; border-radius: 8px; padding: 5px; font-size: 13px; border: 2px solid #ff3300;">⚠️ TERLAMBAT ${teksWaktu}</div>`;
+                            }
 
-                                let notifTerlambat = "";
-                                if (data.terlambat && data.menit > 0) {
-                                    // Logika perhitungan waktu
-                                    let teksWaktu = "";
-                                    if (data.menit < 60) {
-                                        teksWaktu = data.menit + " MENIT";
-                                    } else {
-                                        let jam = Math.floor(data.menit / 60);
-                                        let sisaMenit = data.menit % 60;
-                                        teksWaktu = jam + " JAM " + (sisaMenit > 0 ? sisaMenit + " MENIT" : "");
-                                    }
-                                    notifTerlambat = `<div class="animate__animated animate__shakeX" style="color: #ff3300; font-weight: 900; margin-top: 8px; background: white; border-radius: 8px; padding: 5px; font-size: 13px; border: 2px solid #ff3300;">⚠️ TERLAMBAT ${teksWaktu}</div>`;
-                                }
+                            let htmlContent = `
+                                <img src="${fotoUrl}" class="profile-img" onerror="this.src='https://via.placeholder.com/100?text=FOTO'">
+                                <div style="font-size: 14px; margin-bottom: 5px; font-weight: 500;">${data.msg}</div>
+                                <div style="font-size: 18px; font-weight: bold; color: yellow;">${data.nama}</div>
+                                <div style="font-size: 13px; margin-top: 5px; background: rgba(0,0,0,0.2); display: inline-block; padding: 2px 10px; border-radius: 10px;">${data.jabatan}</div>
+                                ${notifTerlambat}
+                            `;
+                            showStatus(htmlContent, "success", true);
 
-                                let htmlContent = `
-                                    <img src="${fotoUrl}" class="profile-img" onerror="this.src='https://via.placeholder.com/100?text=FOTO'">
-                                    <div style="font-size: 14px; margin-bottom: 5px; font-weight: 500;">${data.msg}</div>
-                                    <div style="font-size: 18px; font-weight: bold; color: yellow;">${data.nama}</div>
-                                    <div style="font-size: 13px; margin-top: 5px; background: rgba(0,0,0,0.2); display: inline-block; padding: 2px 10px; border-radius: 10px;">${data.jabatan}</div>
-                                    ${notifTerlambat}
-                                `;
-                                showStatus(htmlContent, "success", true);
+                        } else {
+                            // --- 4. LOGIKA SUARA DITOLAK ---
+                            playError();
+                            const msgUpper = data.msg ? data.msg.toUpperCase() : "";
 
-                            } else {
-                                // --- 4. LOGIKA SUARA DITOLAK ---
-                                playError();
-                                const msgUpper = data.msg ? data.msg.toUpperCase() : "";
-
-                                if (msgUpper.includes("MINGGU")) {
-                                    bicara("Maaf, hari ini hari Minggu. Sistem absensi dinonaktifkan.");
-                                } 
-                                else if (msgUpper.includes("LIBUR")) {
-                                    bicara("Maaf, hari ini adalah hari libur sekolah.");
-                                }
-                                else if (msgUpper.includes("07:00")) {
-                                    bicara("Maaf, absensi baru dibuka pukul 07:00 pagi.");
-                                } 
-                                else if (msgUpper.includes("SUDAH BERAKHIR") || msgUpper.includes("BATAS WAKTU")) {
-                                    bicara("Maaf, batas waktu absensi hari ini telah berakhir.");
-                                }
-                                else if (msgUpper.includes("SUDAH I") || msgUpper.includes("IZIN")) {
-                                    bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata izin.`);
-                                }
-                                else if (msgUpper.includes("SUDAH S") || msgUpper.includes("SAKIT")) {
-                                    bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata sakit.`);
-                                }
-                                else if (msgUpper.includes("ALPHA") || msgUpper.includes("ALPA")) {
-                                    bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata alpha.`);
-                                }
-                                else if (msgUpper.includes("LENGKAP")) {
-                                    bicara(`Maaf ${sapaan}${namaPanggilan}, absensi Anda sudah lengkap untuk hari ini.`);
-                                } 
-                                else if (msgUpper.includes("SABAR")) {
-                                    const sisaDetik = data.msg.match(/\d+/);
-                                    bicara(`Mohon sabar, tunggu ${sisaDetik ? sisaDetik[0] : ''} detik lagi.`);
-                                }
+                            if (msgUpper.includes("MINGGU")) {
+                                bicara("Maaf, hari ini hari Minggu. Sistem absensi dinonaktifkan.");
+                            } 
+                            else if (msgUpper.includes("LIBUR")) {
+                                bicara("Maaf, hari ini adalah hari libur sekolah.");
+                            }
+                            else if (msgUpper.includes("07:00")) {
+                                bicara("Maaf, absensi baru dibuka pukul 07:00 pagi.");
+                            } 
+                            else if (msgUpper.includes("SUDAH BERAKHIR") || msgUpper.includes("BATAS WAKTU")) {
+                                bicara("Maaf, batas waktu absensi hari ini telah berakhir.");
+                            }
+                            else if (msgUpper.includes("SUDAH I") || msgUpper.includes("IZIN")) {
+                                bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata izin.`);
+                            }
+                            else if (msgUpper.includes("SUDAH S") || msgUpper.includes("SAKIT")) {
+                                bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata sakit.`);
+                            }
+                            else if (msgUpper.includes("ALPHA") || msgUpper.includes("ALPA")) {
+                                bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak bisa absen karena sudah terdata alpha.`);
+                            }
+                            else if (msgUpper.includes("LENGKAP")) {
+                                bicara(`Maaf ${sapaan}${namaPanggilan}, absensi Anda sudah lengkap untuk hari ini.`);
+                            } 
+                            else if (msgUpper.includes("SABAR")) {
+                                const sisaDetik = data.msg.match(/\d+/);
+                                bicara(`Mohon sabar, tunggu ${sisaDetik ? sisaDetik[0] : ''} detik lagi.`);
+                            }
                             else if (msgUpper.includes("JADWAL")) {
-    bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak memiliki jadwal atau tugas tambahan hari ini.`);
-}
-else if (msgUpper.includes("DITOLAK")) {
-    // Ini adalah cadangan jika ada kata ditolak yang tidak tertangkap logika di atas
-    bicara("Maaf, permintaan absensi Anda ditolak.");
-}
-                                showStatus("⚠️ " + (data.msg || "Gagal"), "error");
+                                bicara(`Maaf ${sapaan}${namaPanggilan}, Anda tidak memiliki jadwal atau tugas tambahan hari ini.`);
                             }
-                      } else {
-    playError();
-    const msg = res.content.toUpperCase();
-    if (msg.includes("MINGGU")) {
-        bicara("Maaf, hari Minggu sistem absensi dinonaktifkan.");
-    } else if (msg.includes("LIBUR")) {
-        bicara("Maaf, hari ini adalah hari libur sekolah.");
-    } else if (msg.includes("07:00")) { 
-        // CEK JAM 7 DULU SEBELUM CEK KATA "DITOLAK"
-        bicara("Maaf, absensi baru dibuka pukul 07:00 pagi.");
-    } else if (msg.includes("DITOLAK") || msg.includes("BERAKHIR")) {
-        bicara("Maaf, batas waktu absensi hari ini telah berakhir.");
-    } else {
-        bicara(res.content); // Jika ada pesan lain dari server
-    }
-    
-    showStatus(res.content, "error");
-}
-                    })
-                    .catch((err) => {
+                            else if (msgUpper.includes("DITOLAK")) {
+                                bicara("Maaf, permintaan absensi Anda ditolak.");
+                            }
+                            showStatus("⚠️ " + (data.msg || "Gagal"), "error");
+                        }
+                    } else {
                         playError();
-                        showStatus("❌ Gagal Terhubung ke Server", "error");
-                    })
-                    .finally(() => setTimeout(() => {
-                        document.getElementById('overlay').style.display = 'none';
-                        isProcessing = false;
-                        startScanner();
-                    }, 4000));
-            });
+                        const msg = res.content.toUpperCase();
+                        if (msg.includes("MINGGU")) {
+                            bicara("Maaf, hari Minggu sistem absensi dinonaktifkan.");
+                        } else if (msg.includes("LIBUR")) {
+                            bicara("Maaf, hari ini adalah hari libur sekolah.");
+                        } else if (msg.includes("07:00")) { 
+                            bicara("Maaf, absensi baru dibuka pukul 07:00 pagi.");
+                        } else if (msg.includes("DITOLAK") || msg.includes("BERAKHIR")) {
+                            bicara("Maaf, batas waktu absensi hari ini telah berakhir.");
+                        } else {
+                            bicara(res.content); 
+                        }
+                        showStatus(res.content, "error");
+                    }
+                })
+                .catch((err) => {
+                    playError();
+                    showStatus("❌ Gagal Terhubung ke Server", "error");
+                })
+                .finally(() => setTimeout(() => {
+                    document.getElementById('overlay').style.display = 'none';
+                    isProcessing = false;
+                    startScanner();
+                }, 4000));
+        });
 
-        }, (err) => {
+        /* }, (err) => {
             playError();
             showStatus("❌ GPS MATI / IZIN LOKASI DITOLAK", "error");
             isProcessing = false;
@@ -812,6 +804,7 @@ else if (msgUpper.includes("DITOLAK")) {
                 startScanner(); 
             }, 3000);
         }, { enableHighAccuracy: true });
+        */
     }
 
     function playError() {
@@ -899,8 +892,6 @@ function exportLaporan() {
         .then(res => {
             if (res.status === "success") {
                 const win = window.open("", "_blank");
-                
-                // Membuat konten HTML
                 let htmlContent = `
                 <html>
                 <head>
@@ -912,8 +903,6 @@ function exportLaporan() {
                         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
                         th, td { border: 1px solid black; padding: 5px; text-align: center; }
                         th { background: #f2f2f2; }
-                        
-                        /* Tombol Bantuan untuk HP */
                         .floating-print {
                             position: fixed; bottom: 20px; right: 20px;
                             background: #2b59bc; color: white; border: none;
@@ -928,7 +917,6 @@ function exportLaporan() {
                     <button class="floating-print" onclick="window.print()">
                         <i class="fas fa-print"></i> CETAK SEKARANG
                     </button>
-                    
                     <h3 style="text-align:center;">LAPORAN ABSENSI DIGITAL<br>BULAN: ${res.bln}</h3>
                     <table>
                         <thead><tr>${res.data[0].map(h => `<th>${h}</th>`).join('')}</tr></thead>
@@ -938,11 +926,8 @@ function exportLaporan() {
                     </table>
                 </body>
                 </html>`;
-
                 win.document.write(htmlContent);
                 win.document.close();
-                
-                // Trigger otomatis untuk Laptop, untuk HP ada tombol cadangan di atas
                 setTimeout(() => { win.print(); }, 1000);
             }
         })
@@ -996,7 +981,6 @@ function simpanIzin() {
     const ket = document.getElementById('ketIzin').value;
     const btn = document.getElementById('btnSimpanIzin');
 
-    // 1. Validasi input kosong di sisi client
     if (!id || !ket) { 
         alert("Lengkapi data!"); 
         return; 
@@ -1005,25 +989,17 @@ function simpanIzin() {
     btn.disabled = true;
     btn.innerText = "Mengirim...";
 
-    // 2. Kirim permintaan ke Code.gs
-    // Server yang akan memvalidasi waktu, hari libur, dan jadwal
     fetch(`${scriptURL}?action=tambahIzin&id=${id}&status=${status}&ket=${encodeURIComponent(ket)}`)
-        .then(res => res.text()) // Menerima respon sebagai teks bersih
+        .then(res => res.text())
         .then(data => {
-            // Cek jika respon mengandung tanda gagal/peringatan dari server
             if (data.includes("⚠️") || data.includes("❌") || data.includes("DITOLAK")) {
-                playError(); // Bunyikan alarm jika gagal
-                alert(data); // Menampilkan pesan: "❌ DITOLAK: Batas waktu..."
+                playError();
+                alert(data);
             } else {
-                // Jika sukses
-                alert(data); // Menampilkan pesan: "✅ BERHASIL: Status Izin..."
-                
-                // Reset form input
+                alert(data);
                 document.getElementById('idGuruIzin').value = '';
                 document.getElementById('ketIzin').value = '';
                 document.getElementById('idGuruIzin').focus();
-                
-                // 3. Refresh angka rekap di dashboard secara otomatis
                 fetch(`${scriptURL}?action=getRingkasan`)
                     .then(res => res.json())
                     .then(dataRingkasan => {
@@ -1040,13 +1016,11 @@ function simpanIzin() {
             alert("Gagal mengirim data! Periksa koneksi internet."); 
         })
         .finally(() => { 
-            // Kembalikan status tombol
             btn.disabled = false; 
             btn.innerText = "Simpan Izin"; 
         });
 }
 
-// --- FUNGSI CARI NAMA OTOMATIS ---
 let timerCek;
 function cekNamaOtomatis() {
     clearTimeout(timerCek);
@@ -1159,7 +1133,6 @@ function cekNamaOtomatis() {
 
     window.addEventListener('load', function() {
     const preloader = document.getElementById('preloader');
-    // Beri jeda sedikit agar transisi terasa halus
     setTimeout(() => {
         preloader.classList.add('fade-out');
         setTimeout(() => {
@@ -1180,23 +1153,19 @@ function cekNamaOtomatis() {
             });
         }
 
-    // --- FUNGSI TAMBAHAN: HITUNG JARAK ---
+    // --- FUNGSI TAMBAHAN: HITUNG JARAK (TIDAK DIGUNAKAN LAGI) ---
 function hitungJarak(lat1, lon1, lat2, lon2) {
-    const R = 6371000; // Radius bumi dalam meter
+    const R = 6371000; 
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
               Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
               Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; // Hasilnya dalam meter
+    return R * c; 
 }
 
     window.onload = startScanner;
 </script>
 </body>
 </html>
-
-
-
-
