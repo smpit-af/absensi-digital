@@ -645,43 +645,43 @@
             const userLat = position.coords.latitude;
             const userLon = position.coords.longitude;
             
-            // --- KONFIGURASI LOKASI SEKOLAH ---
-            const sekolahLat = -6.881411942835804; // <--- GANTI DENGAN LATITUDE SEKOLAH ANDA
-            const sekolahLon = 108.72277002958089; // <--- GANTI DENGAN LONGITUDE SEKOLAH ANDA
-            const radiusMaksimal = 100; // Toleransi 100 meter
+            // // --- KONFIGURASI LOKASI SEKOLAH ---
+            // const sekolahLat = -6.881411942835804; // <--- GANTI DENGAN LATITUDE SEKOLAH ANDA
+            // const sekolahLon = 108.72277002958089; // <--- GANTI DENGAN LONGITUDE SEKOLAH ANDA
+            // const radiusMaksimal = 100; // Toleransi 100 meter
             
-            const jarak = hitungJarak(userLat, userLon, sekolahLat, sekolahLon);
+            // const jarak = hitungJarak(userLat, userLon, sekolahLat, sekolahLon);
 
-            // JIKA DI LUAR JANGKAUAN
-            if (jarak > radiusMaksimal) {
-                playError();
-                showStatus(`❌ DITOLAK: Jarak Anda ${Math.round(jarak)}m dari sekolah.`, "error");
-                bicara("Maaf, Anda berada di luar jangkauan sekolah.");
+            // // JIKA DI LUAR JANGKAUAN
+            // if (jarak > radiusMaksimal) {
+            //     playError();
+            //     showStatus(`❌ DITOLAK: Jarak Anda ${Math.round(jarak)}m dari sekolah.`, "error");
+            //     bicara("Maaf, Anda berada di luar jangkauan sekolah.");
                 
-                setTimeout(() => {
-                    document.getElementById('overlay').style.display = 'none';
-                    isProcessing = false;
-                    startScanner();
-                }, 4000);
-                return;
-            }
+            //     setTimeout(() => {
+            //         document.getElementById('overlay').style.display = 'none';
+            //         isProcessing = false;
+            //         startScanner();
+            //     }, 4000);
+            //     return;
+            // }
 
-            // 2. JIKA LOKASI OK, LANJUT KE LOGIKA ASLI ANDA
-            html5QrCode.stop().then(() => {
-                showStatus("⏳ Memproses...", "loading");
-                const finalURL = `${scriptURL}?id=${encodeURIComponent(decodedText)}&t=${new Date().getTime()}`;
+            // // 2. JIKA LOKASI OK, LANJUT KE LOGIKA ASLI ANDA
+            // html5QrCode.stop().then(() => {
+            //     showStatus("⏳ Memproses...", "loading");
+            //     const finalURL = `${scriptURL}?id=${encodeURIComponent(decodedText)}&t=${new Date().getTime()}`;
 
-                fetch(finalURL)
-                    .then(response => response.text().then(text => {
-                        try {
-                            return { type: 'json', content: JSON.parse(text) };
-                        } catch (e) {
-                            return { type: 'text', content: text };
-                        }
-                    }))
-                    .then(res => {
-                        if (res.type === 'json') {
-                            const data = res.content;
+            //     fetch(finalURL)
+            //         .then(response => response.text().then(text => {
+            //             try {
+            //                 return { type: 'json', content: JSON.parse(text) };
+            //             } catch (e) {
+            //                 return { type: 'text', content: text };
+            //             }
+            //         }))
+            //         .then(res => {
+            //             if (res.type === 'json') {
+            //                 const data = res.content;
 
                             // --- 1. LOGIKA IDENTITAS & SAPAAN ---
                             let namaPanggilan = data.nama ? data.nama.split(',')[0] : "";
@@ -1196,5 +1196,6 @@ function hitungJarak(lat1, lon1, lat2, lon2) {
 </script>
 </body>
 </html>
+
 
 
